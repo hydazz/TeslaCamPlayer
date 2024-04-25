@@ -66,10 +66,12 @@ public partial class Index : ComponentBase
 		{
 			_clips = await HttpClient.GetFromNewtonsoftJsonAsync<Clip[]>("Api/GetClips.json");
 			if (_clips != null)
+			{
+				FilterClips();
 				return;
+			}
 		}
-
-		if (refreshCache)
+		else
 		{
 			_state = new("Refreshing...", 1, 0);
 			await HttpClient.PostAsync("Api/RefreshClips", null);
@@ -86,10 +88,10 @@ public partial class Index : ComponentBase
 		while (true)
 		{
 			_state = await HttpClient.GetFromNewtonsoftJsonAsync<State>("Api/GetState.json");
+			_ = InvokeAsync(StateHasChanged);
+
 			if (!_state.IsProcessing)
 				break;
-
-			_ = InvokeAsync(StateHasChanged);
 
 			await Task.Delay(1000);
 		}
