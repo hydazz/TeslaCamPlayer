@@ -7,7 +7,7 @@ using TeslaCamPlayer.BlazorHosted.Shared.Models;
 namespace TeslaCamPlayer.BlazorHosted.Server.Controllers;
 
 [ApiController]
-[Route("Api/[action]")]
+[Route("Api")]
 public class ApiController : ControllerBase
 {
 	private readonly IClipsService _clipsService;
@@ -19,18 +19,29 @@ public class ApiController : ControllerBase
 		_clipsService = clipsService;
 	}
 
-	[HttpGet]
-	public async Task<Clip[]> GetClips(bool refreshCache = false)
-		=> await _clipsService.GetClipsAsync(refreshCache);
+	[HttpGet("GetClips.json")]
+	public async Task<Clip[]> GetClips()
+		=> await _clipsService.GetClipsAsync();
+
+	[HttpPost("RefreshClips")]
+	public IActionResult RefreshClips()
+	{
+		_clipsService.RefreshClips();
+		return Ok();
+	}
+
+	[HttpGet("GetState.json")]
+	public State GetState()
+		=> _clipsService.State;
 
 	private bool IsUnderRootPath(string path)
 		=> path.StartsWith(_rootFullPath);
 
-	[HttpGet("{path}.mp4")]
+	[HttpGet("Video/{path}.mp4")]
 	public IActionResult Video(string path)
 		=> ServeFile(path, ".mp4", "video/mp4", true);
 
-	[HttpGet("{path}.png")]
+	[HttpGet("Thumbnail/{path}.png")]
 	public IActionResult Thumbnail(string path)
 		=> ServeFile(path, ".png", "image/png");
 

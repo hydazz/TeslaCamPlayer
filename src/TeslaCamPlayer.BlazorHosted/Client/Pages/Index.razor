@@ -4,7 +4,14 @@
 @if (_filteredclips == null)
 {
 	<div class="loading-screen">
-		Loading...
+		@if (_state.IsProcessing)
+		{
+			@($"{_state.Description ?? "Loading..."} {_state.Percentage}%")
+		}
+		else
+		{
+			<text>Loading...</text>
+		}
 	</div>
 }
 else
@@ -25,7 +32,7 @@ else
 
 			<MudToolBar Class="py-2">
 				<MudTooltip Text="Refresh videos/events">
-					<MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" OnClick="@(() => RefreshEventsAsync(true))"/>
+					<MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" OnClick="@(async () => await RefreshEventsAsync(true))"/>
 				</MudTooltip>
 				<MudSpacer/>
 				<div>

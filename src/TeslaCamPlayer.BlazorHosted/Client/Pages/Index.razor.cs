@@ -33,6 +33,7 @@ public partial class Index : ComponentBase
 	private bool _showFilter;
 	private bool _filterChanged;
 	private EventFilterValues _eventFilter = new();
+	private State _state = new();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -44,7 +45,7 @@ public partial class Index : ComponentBase
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (!_setDatePickerInitialDate && _filteredclips?.Any() == true && _datePicker != null)
+		if (!_setDatePickerInitialDate && _filteredclips?.Length > 0 && _datePicker != null)
 		{
 			_setDatePickerInitialDate = true;
 			var latestClip = _filteredclips.MaxBy(c => c.EndDate)!;
@@ -57,13 +58,41 @@ public partial class Index : ComponentBase
 	{
 		_filteredclips = null;
 		_clips = null;
+		_setDatePickerInitialDate = false;
 		await Task.Delay(10);
 		await InvokeAsync(StateHasChanged);
 
-		_setDatePickerInitialDate = false;
-		_clips = await HttpClient.GetFromNewtonsoftJsonAsync<Clip[]>("Api/GetClips?refreshCache=" + refreshCache);
+		if (!refreshCache)
+		{
+			_clips = await HttpClient.GetFromNewtonsoftJsonAsync<Clip[]>("Api/GetClips.json");
+			if (_clips != null)
+				return;
+		}
+
+		if (refreshCache)
+		{
+			_state = new("Refreshing...", 1, 0);
+			await HttpClient.PostAsync("Api/RefreshClips", null);
+		}
+
+		await WaitForProcessing();
+		_clips = await HttpClient.GetFromNewtonsoftJsonAsync<Clip[]>("Api/GetClips.json");
 
 		FilterClips();
+	}
+
+	private async Task WaitForProcessing()
+	{
+		while (true)
+		{
+			_state = await HttpClient.GetFromNewtonsoftJsonAsync<State>("Api/GetState.json");
+			if (!_state.IsProcessing)
+				break;
+
+			_ = InvokeAsync(StateHasChanged);
+
+			await Task.Delay(1000);
+		}
 	}
 
 	private void FilterClips()
@@ -114,7 +143,7 @@ public partial class Index : ComponentBase
 		};
 
 		if (clip.Type == ClipType.Recent || clip.Type == ClipType.Unknown || clip.Event == null)
-			return new[] { baseIcon };
+			return [baseIcon];
 
 		var secondIcon = clip.Event.Reason switch
 		{
@@ -128,7 +157,7 @@ public partial class Index : ComponentBase
 		if (clip.Event.Reason.StartsWith(CamEvents.SentryAwareAccelerationPrefix))
 			secondIcon = Icons.Material.Filled.OpenWith;
 
-		return secondIcon == null ? new [] { baseIcon } : new[] { baseIcon, secondIcon };
+		return secondIcon == null ? [baseIcon] : [baseIcon, secondIcon];
 	}
 
 	private class ScrollToOptions

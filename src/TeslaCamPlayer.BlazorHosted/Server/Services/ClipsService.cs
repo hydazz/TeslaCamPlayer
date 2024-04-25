@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Serilog;
 using TeslaCamPlayer.BlazorHosted.Server.Providers.Interfaces;
@@ -18,10 +13,13 @@ public partial class ClipsService : IClipsService
 	
 	private static readonly string CacheFilePath = Path.Combine(AppContext.BaseDirectory, "clips.json");
 	private static readonly Regex FileNameRegex = FileNameRegexGenerated();
-	private static Clip[] _cache;
+	private static readonly SemaphoreSlim RefreshSemaphore = new(1, 1);
+	private static Clip[] _clips;
 	
 	private readonly ISettingsProvider _settingsProvider;
 	private readonly IFfProbeService _ffProbeService;
+	
+	public State State { get; private set; } = new();
 
 	public ClipsService(ISettingsProvider settingsProvider, IFfProbeService ffProbeService)
 	{
@@ -29,52 +27,106 @@ public partial class ClipsService : IClipsService
 		_ffProbeService = ffProbeService;
 	}
 
-	private async Task<Clip[]> GetCachedAsync()
-		=> File.Exists(CacheFilePath)
-			? JsonConvert.DeserializeObject<Clip[]>(await File.ReadAllTextAsync(CacheFilePath))
-			: null;
-
-	public async Task<Clip[]> GetClipsAsync(bool refreshCache = false)
+	private static async Task<Clip[]> GetCachedAsync()
 	{
-		_cache ??= await GetCachedAsync();
-		
-		if (!refreshCache && _cache != null)
-			return _cache;
+		try
+		{
+			return File.Exists(CacheFilePath)
+				? JsonConvert.DeserializeObject<Clip[]>(await File.ReadAllTextAsync(CacheFilePath))
+				: null;
+		}
+		catch (Exception e)
+		{
+			Log.Error(e, "Failed to read cached clips data from {Path}", CacheFilePath);
+			return null;
+		}
+	}
 
-		_cache ??= [];
+	public async Task<Clip[]> GetClipsAsync()
+	{
+		_clips ??= await GetCachedAsync();
 		
-		var knownVideoFiles = _cache
+		if (_clips != null)
+			return _clips;
+
+		if (!State.IsProcessing)
+			State = new("", 1, 1);
+		
+		_ = Task.Run(RefreshClips);
+		return null;
+	}
+	
+	public async void RefreshClips()
+	{
+		var isRefreshing = RefreshSemaphore.CurrentCount == 0;
+		await RefreshSemaphore.WaitAsync();
+		if (isRefreshing)
+			return;
+
+		try
+		{
+			await RefreshClipsInternal();
+		}
+		catch (Exception e)
+		{
+			Log.Error(e, "Failed to refresh clips");
+		}
+		finally
+		{
+			RefreshSemaphore.Release();
+		}
+	}
+
+	private async Task RefreshClipsInternal()
+	{
+		var knownClips = _clips ?? [];
+		
+		var knownVideoFiles = knownClips
 			.SelectMany(c => c.Segments.SelectMany(s => s.VideoFiles))
 			.Where(f => f != null)
 			.ToDictionary(v => v.FilePath, v => v);
 
-		var videoFiles = (await Task.WhenAll(Directory
+		var files = Directory
 			.GetFiles(_settingsProvider.Settings.ClipsRootPath, "*.mp4", SearchOption.AllDirectories)
-			.AsParallel()
 			.Select(path => new { Path = path, RegexMatch = FileNameRegex.Match(path) })
 			.Where(f => f.RegexMatch.Success)
-			.ToList()
-			.Select(async f => knownVideoFiles.TryGetValue(f.Path, out var knownVideo) ? knownVideo : await TryParseVideoFileAsync(f.Path, f.RegexMatch))))
-			.AsParallel()
-			.Where(vfi => vfi != null)
-			.ToList();
-
-		var recentClips = GetRecentClips(videoFiles
-			.Where(vfi => vfi.ClipType == ClipType.Recent).ToList());
-		
-		var clips = videoFiles
-			.Select(vfi => vfi.EventFolderName)
-			.Distinct()
-			.AsParallel()
-			.Where(e => !string.IsNullOrWhiteSpace(e))
-			.Select(e => ParseClip(e, videoFiles))
-			.Concat(recentClips.AsParallel())
-			.OrderByDescending(c => c.StartDate)
 			.ToArray();
 
-		_cache = clips;
-		await File.WriteAllTextAsync(CacheFilePath, JsonConvert.SerializeObject(clips));
-		return _cache;
+		var videoFiles = new List<VideoFile>(files.Length);
+		for (var i = 0; i < files.Length; i++)
+		{
+			State = new("Analyzing video files...", files.Length, i + 1);
+
+			var file = files[i];
+			
+			if (knownVideoFiles.TryGetValue(file.Path, out var knownVideo))
+				videoFiles.Add(knownVideo);
+
+			var parsedFile = await TryParseVideoFileAsync(file.Path, file.RegexMatch);
+			if (parsedFile != null)
+				videoFiles.Add(parsedFile);
+		}
+
+		var recentClips = GetRecentClips(videoFiles.Where(vfi => vfi.ClipType == ClipType.Recent).ToList());
+
+		var distinctClips = videoFiles
+			.Select(vfi => vfi.EventFolderName)
+			.Where(f => !string.IsNullOrWhiteSpace(f))
+			.Distinct()
+			.ToArray();
+		var clips = new List<Clip>();
+		for (var i = 0; i < distinctClips.Length; i++)
+		{
+			clips.Add(await ParseClip(distinctClips[i], videoFiles));
+			State = new("Reading event data...", distinctClips.Length, i + 1);
+		}
+
+		_clips = clips
+			.Concat(recentClips)
+			.OrderByDescending(c => c.StartDate)
+			.ToArray();
+		
+		await File.WriteAllTextAsync(CacheFilePath, JsonConvert.SerializeObject(_clips));
 	}
 
 	private static IEnumerable<Clip> GetRecentClips(List<VideoFile> recentVideoFiles)
@@ -190,7 +242,7 @@ public partial class ClipsService : IClipsService
 		};
 	}
 
-	private static Clip ParseClip(string eventFolderName, IEnumerable<VideoFile> videoFiles)
+	private static async Task<Clip> ParseClip(string eventFolderName, IEnumerable<VideoFile> videoFiles)
 	{
 		var eventVideoFiles = videoFiles
 			.AsParallel()
@@ -213,7 +265,7 @@ public partial class ClipsService : IClipsService
 
 		var eventFolderPath = Path.GetDirectoryName(eventVideoFiles.First().FilePath)!;
 		var expectedEventJsonPath = Path.Combine(eventFolderPath, "event.json");
-		var eventInfo = TryReadEvent(expectedEventJsonPath);
+		var eventInfo = await TryReadEvent(expectedEventJsonPath);
 
 		var expectedEventThumbnailPath = Path.Combine(eventFolderPath, "thumb.png");
 		var thumbnailUrl = File.Exists(expectedEventThumbnailPath)
@@ -227,14 +279,14 @@ public partial class ClipsService : IClipsService
 		};
 	}
 
-	private static Event TryReadEvent(string path)
+	private static async Task<Event> TryReadEvent(string path)
 	{
 		try
 		{
 			if (!File.Exists(path))
 				return null;
 
-			var json = File.ReadAllText(path);
+			var json = await File.ReadAllTextAsync(path);
 			return JsonConvert.DeserializeObject<Event>(json);
 		}
 		catch (Exception e)
