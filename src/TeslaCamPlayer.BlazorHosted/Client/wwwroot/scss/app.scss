@@ -23,18 +23,39 @@ html, body {
 .main-content {
 	display: flex;
 	height: 100%;
+	position: relative;
+
+	.toggle-browser-button { // needs to be moved to a nicer spot
+		position: absolute;
+		z-index: 10;
+		top: 50%;
+		transform: translateY(-50%);
+	}
 	
 	.viewer-container {
 		flex-grow: 1;
 		min-width: 0;
 		height: 100%;
 		overflow: hidden;
+		transition: margin-left 0.3s ease;
 	}
 	
 	.browser {
 		display: flex;
 		flex-flow: column;
 		flex-shrink: 0;
+		transition: width 0.3s ease;
+		overflow: hidden;
+
+		&.collapsed {
+			width: 0;
+
+			.events-list,
+			.browser-date-picker,
+			.toolbar {
+				display: none;
+			}
+		}
 	}
 }
 

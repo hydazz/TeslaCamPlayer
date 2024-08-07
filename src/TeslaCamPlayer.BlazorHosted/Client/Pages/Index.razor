@@ -10,10 +10,10 @@
 else
 {
 	<div class="main-content">
-		<div class="viewer-container">
-			<ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked" NextButtonClicked="NextButtonClicked" />
-		</div>
-		<div class="browser">
+		<MudIconButton Icon="@(_isBrowserCollapsed ? Icons.Material.Filled.ArrowForwardIos : Icons.Material.Filled.ArrowBackIos)"
+					   @onclick="ToggleBrowser" Class="toggle-browser-button" />
+		
+		<div class="@(_isBrowserCollapsed ? "browser collapsed" : "browser")">
 			<MudDatePicker
 				@ref="_datePicker"
 				PickerVariant="PickerVariant.Static"
@@ -77,6 +77,10 @@ else
 					</Placeholder>
 				</Virtualize>
 			</div>
+		</div>
+
+		<div class="viewer-container">
+			<ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked" NextButtonClicked="NextButtonClicked" />
 		</div>
 	</div>
 }

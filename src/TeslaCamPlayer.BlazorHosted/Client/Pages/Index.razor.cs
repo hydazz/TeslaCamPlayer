@@ -33,6 +33,7 @@ public partial class Index : ComponentBase
 	private bool _showFilter;
 	private bool _filterChanged;
 	private EventFilterValues _eventFilter = new();
+	private bool _isBrowserCollapsed = false;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -40,6 +41,12 @@ public partial class Index : ComponentBase
 		_scrollDebounceTimer.Elapsed += ScrollDebounceTimerTick;
 
 		await RefreshEventsAsync(false);
+	}
+
+	private void ToggleBrowser()
+	{
+		_isBrowserCollapsed = !_isBrowserCollapsed;
+		StateHasChanged();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -66,17 +73,17 @@ public partial class Index : ComponentBase
 		FilterClips();
 	}
 
-    private async Task DeleteEventAsync()
-    {
-        if (_activeClip != null && !string.IsNullOrEmpty(_activeClip.DirectoryPath))
-        {
-            var response = await HttpClient.DeleteAsync($"Api/DeleteEvent?path={Uri.EscapeDataString(_activeClip.DirectoryPath)}");
-            if (response.IsSuccessStatusCode)
-            {
-                await RefreshEventsAsync(true);
-            }
-        }
-    }
+	private async Task DeleteEventAsync()
+	{
+		if (_activeClip != null && !string.IsNullOrEmpty(_activeClip.DirectoryPath))
+		{
+			var response = await HttpClient.DeleteAsync($"Api/DeleteEvent?path={Uri.EscapeDataString(_activeClip.DirectoryPath)}");
+			if (response.IsSuccessStatusCode)
+			{
+				await RefreshEventsAsync(true);
+			}
+		}
+	}
 
 	private void FilterClips()
 	{
