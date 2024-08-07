@@ -1,4 +1,5 @@
 using System.Web;
+using Serilog;
 using Microsoft.AspNetCore.Mvc;
 using TeslaCamPlayer.BlazorHosted.Server.Providers.Interfaces;
 using TeslaCamPlayer.BlazorHosted.Server.Services.Interfaces;
@@ -25,6 +26,29 @@ public class ApiController : ControllerBase
 
 	private bool IsUnderRootPath(string path)
 		=> path.StartsWith(_rootFullPath);
+
+	[HttpDelete]
+	public IActionResult DeleteEvent(string path)
+	{
+		if (string.IsNullOrEmpty(path) || !IsUnderRootPath(path))
+			return BadRequest("Invalid path");
+
+		try
+		{
+			var fullPath = Path.Combine(_rootFullPath, path);
+			if (Directory.Exists(fullPath))
+			{
+				Directory.Delete(fullPath, true);
+				Log.Information("Deleted event folder: {Path}", fullPath);
+				return Ok();
+			}
+			return NotFound("Directory not found");
+		}
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"Error deleting directory: {ex.Message}");
+		}
+	}
 
 	[HttpGet("{path}.mp4")]
 	public IActionResult Video(string path)

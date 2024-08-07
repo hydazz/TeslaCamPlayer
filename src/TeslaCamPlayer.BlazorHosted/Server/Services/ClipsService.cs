@@ -222,6 +222,7 @@ public partial class ClipsService : IClipsService
 
 		return new Clip(eventVideoFiles.First().ClipType, segments)
 		{
+			DirectoryPath = eventFolderPath,
 			Event = eventInfo,
 			ThumbnailUrl = thumbnailUrl
 		};

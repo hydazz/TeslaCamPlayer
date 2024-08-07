@@ -27,6 +27,9 @@ else
 				<MudTooltip Text="Refresh videos/events">
 					<MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" OnClick="@(() => RefreshEventsAsync(true))"/>
 				</MudTooltip>
+				<MudTooltip Text="Delete Event">
+					<MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@DeleteEventAsync"/>
+				</MudTooltip>
 				<MudSpacer/>
 				<div>
 					<MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter"/>

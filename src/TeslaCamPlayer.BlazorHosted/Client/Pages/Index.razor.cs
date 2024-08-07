@@ -66,6 +66,18 @@ public partial class Index : ComponentBase
 		FilterClips();
 	}
 
+    private async Task DeleteEventAsync()
+    {
+        if (_activeClip != null && !string.IsNullOrEmpty(_activeClip.DirectoryPath))
+        {
+            var response = await HttpClient.DeleteAsync($"Api/DeleteEvent?path={Uri.EscapeDataString(_activeClip.DirectoryPath)}");
+            if (response.IsSuccessStatusCode)
+            {
+                await RefreshEventsAsync(true);
+            }
+        }
+    }
+
 	private void FilterClips()
 	{
 		_filteredclips = (_clips ??= Array.Empty<Clip>())

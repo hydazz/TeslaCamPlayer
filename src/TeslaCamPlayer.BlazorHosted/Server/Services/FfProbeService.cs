@@ -13,7 +13,6 @@ public abstract class FfProbeService : IFfProbeService
 	{
 		try
 		{
-			Log.Information("Get video duration for video {Path}", videoFilePath);
 
 			var process = new Process
 			{
