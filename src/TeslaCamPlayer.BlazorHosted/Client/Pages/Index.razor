@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using TeslaCamPlayer.BlazorHosted.Shared.Models
+@inject IDialogService DialogService
 
 @if (_filteredclips == null)
 {
@@ -10,7 +11,7 @@
 else
 {
         <div class="main-content">
-        <div class="@(_isBrowserCollapsed ? "browser collapsed" : "browser")">
+        <div class="@(_isBrowserCollapsed ? "browser collapsed" : "browser")"> <!-- TODO use blazor drawer? -->
             <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
                 FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
                 @onmousewheel="@DatePickerOnMouseWheel" />
@@ -22,7 +23,7 @@ else
                 </MudTooltip>
                 <MudTooltip Text="Delete Selected Event">
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                        OnClick="@DeleteEventAsync" />
+                        OnClick="@OpenDeleteConfirmationDialog" />
                 </MudTooltip>
                 <MudSpacer />
                 <div>
@@ -77,8 +78,8 @@ else
                     </Virtualize>
                 </div>
                 <div class="browser-footer">
-                    <span>v1.0.0</span>
-                    <a href="https://github.com/your-repo" target="_blank">
+                    <span>v-placeholder</span>
+                    <a href="https://github.com/hydazz/TeslaCamPlayer" target="_blank">
                         <MudIcon Icon="@Icons.Custom.Brands.GitHub" />
                     </a>
                 </div>
