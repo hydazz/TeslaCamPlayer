@@ -55,14 +55,14 @@
 			align-items: center;
 			
 			.event-marker {
-				$size: 20px;
+				$size: 15px;
 				width: $size;
 				height: $size;
 				border-radius: calc($size / 2);
 				position: absolute;
 				top: 50%;
 				transform: translate(-50%, -50%);
-				background-color: adjust-color(#f64e62ff, $alpha: -0.5);
+				background-color: adjust-color(rgb(255, 0, 30));
 				pointer-events: none;
 				z-index: $z-timeline-event-marker;
 			}

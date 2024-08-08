@@ -24,13 +24,6 @@ html, body {
 	display: flex;
 	height: 100%;
 	position: relative;
-
-	.toggle-browser-button { // needs to be moved to a nicer spot
-		position: absolute;
-		z-index: 10;
-		top: 50%;
-		transform: translateY(-50%);
-	}
 	
 	.viewer-container {
 		flex-grow: 1;
@@ -55,24 +48,45 @@ html, body {
 			.toolbar {
 				display: none;
 			}
+
+			.browser-footer {
+				display: none;
+			}
+		}
+
+		.browser-footer {
+			margin-top: auto; // Pushes the footer to the bottom
+			padding: 10px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
 		}
 	}
+
+    .collapse-button-container {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100; /* Ensure it's above other elements */
+    }
 }
+
 
 .events-list {
 	overflow-y: auto;
 }
 
-$event-item-height: 60px;
-$event-item-padding: 5px;
-$event-item-inner-height: $event-item-height - $event-item-padding * 2;
 .event {
 	display: flex;
-	height: $event-item-height;
-	padding: $event-item-padding;
+	padding: 5px;
+	margin: 5px;
 	transition: background-color 0.2s ease;
 	cursor: pointer;
 	align-items: center;
+	border-radius: 10px;
 
 	&:hover {
 		background-color: var(--mud-palette-background-grey) !important;
@@ -83,14 +97,17 @@ $event-item-inner-height: $event-item-height - $event-item-padding * 2;
 	}
 
 	.thumbnail {
-		// Pictures are 4:3
-		width: #{calc(round(calc($event-item-inner-height / 3 * 4 * 100)) / 100)}px;
 		height: 100%;
 		transform: none;
+		border-radius: 5px;
 	}
 	
 	.details {
 		flex-grow: 1;
+	}
+	
+	.icons, .date, .location {
+		display: flex
 	}
 }
 
