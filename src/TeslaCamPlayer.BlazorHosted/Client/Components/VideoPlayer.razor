@@ -1,55 +1,55 @@
 ﻿<video
-	@key="@Src"
-	@ref="_player"
-	src="@Src"
-	class="@Class
+    @key="@Src"
+    @ref="_player"
+    src="@Src"
+    class="@Class
 	@(string.IsNullOrWhiteSpace(Src) ? "d-none" : null)"
-	@onended="@VideoEndedHandler"
-	@ontimeupdate="@TimeUpdateHandler"
-	@oncanplaythrough="@OnLoadedData"
-	disableremoteplayback></video>
+    @onended="@VideoEndedHandler"
+    @ontimeupdate="@TimeUpdateHandler"
+    @oncanplaythrough="@OnLoadedData"
+    disableremoteplayback></video>
 
 @code {
-	[Inject]
-	public IJSRuntime JsRuntime { get; set; }
-	
-	[Parameter]
-	public string Src { get; set; }
-	
-	[Parameter]
-	public string Class { get; set; }
-	
-	[Parameter]
-	public EventCallback VideoEnded { get; set; }
-	
-	[Parameter]
-	public EventCallback TimeUpdate { get; set; }
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; }
 
-	public delegate void LoadedHandler();
+    [Parameter]
+    public string Src { get; set; }
 
-	public event LoadedHandler Loaded;
+    [Parameter]
+    public string Class { get; set; }
 
-	private ElementReference _player;
-	
-	public ValueTask PlayAsync()
-		=> JsRuntime.InvokeVoidAsync("HTMLVideoElement.prototype.play.call", _player);
+    [Parameter]
+    public EventCallback VideoEnded { get; set; }
 
-	public ValueTask PauseAsync()
-		=> JsRuntime.InvokeVoidAsync("HTMLVideoElement.prototype.pause.call", _player);
+    [Parameter]
+    public EventCallback TimeUpdate { get; set; }
 
-	public ValueTask<double> GetTimeAsync()
-		=> JsRuntime.InvokeAsync<double>("getProperty", _player, "currentTime");
+    public delegate void LoadedHandler();
 
-	public ValueTask SetTimeAsync(double time)
-		=> JsRuntime.InvokeVoidAsync("setProperty", _player, "currentTime", time);
+    public event LoadedHandler Loaded;
 
-	private Task VideoEndedHandler()
-		=> VideoEnded.InvokeAsync();
+    private ElementReference _player;
 
-	private Task TimeUpdateHandler()
-		=> TimeUpdate.InvokeAsync();
+    public ValueTask PlayAsync()
+        => JsRuntime.InvokeVoidAsync("HTMLVideoElement.prototype.play.call", _player);
 
-	private void OnLoadedData()
-		=> Loaded?.Invoke();
+    public ValueTask PauseAsync()
+        => JsRuntime.InvokeVoidAsync("HTMLVideoElement.prototype.pause.call", _player);
+
+    public ValueTask<double> GetTimeAsync()
+        => JsRuntime.InvokeAsync<double>("getProperty", _player, "currentTime");
+
+    public ValueTask SetTimeAsync(double time)
+        => JsRuntime.InvokeVoidAsync("setProperty", _player, "currentTime", time);
+
+    private Task VideoEndedHandler()
+        => VideoEnded.InvokeAsync();
+
+    private Task TimeUpdateHandler()
+        => TimeUpdate.InvokeAsync();
+
+    private void OnLoadedData()
+        => Loaded?.Invoke();
 
 }

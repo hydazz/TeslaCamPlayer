@@ -1,96 +1,97 @@
 ﻿@import "z-index";
 
 .viewer {
-	min-width: 0;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 
-	.top-row, .bottom-row {
-		display: flex;
-		justify-content: center;
-		flex-grow: 1;
-		min-height: 0;
+    .top-row,
+    .bottom-row {
+        display: flex;
+        justify-content: center;
+        flex-grow: 1;
+        min-height: 0;
 
-		video {
-			min-width: 0;
-			height: 100%;
-		}
-	}
+        video {
+            min-width: 0;
+            height: 100%;
+        }
+    }
 
-	.top-row {
-		align-items: flex-end;
-		
-		video {
-			object-position: bottom;
-		}
-	}
+    .top-row {
+        align-items: flex-end;
 
-	.bottom-row {
-		align-items: flex-start;
+        video {
+            object-position: bottom;
+        }
+    }
 
-		video {
-			object-position: top;
-		}
-	}
+    .bottom-row {
+        align-items: flex-start;
 
-	.controls {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 10px;
-		
-		.play-pause {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-		}
-		
-		.seeker-slider-container {
-			display: flex;
-			flex-direction: row;
-			width: 80%;
-			align-items: center;
-			
-			.event-marker {
-				$size: 15px;
-				width: $size;
-				height: $size;
-				border-radius: calc($size / 2);
-				position: absolute;
-				top: 50%;
-				transform: translate(-50%, -50%);
-				background-color: adjust-color(rgb(255, 0, 30));
-				pointer-events: none;
-				z-index: $z-timeline-event-marker;
-			}
-			
-			.segment-marker {
-				position: absolute;
-				width: 1px;
-				transform: translateX(-50%);
-				pointer-events: none;
-				top: 0;
-				bottom: 0;
-				background-color: #424242;
-				z-index: $z-timeline-segment-marker;
-			}
-			
-			.time-container {
-				flex-shrink: 0;
-			}
-			
-			.slider-container {
-				margin: 0 15px;
-				position: relative;
-				flex-grow: 1;
-				display: flex;
-			}
-			
-			.mud-slider {
-				z-index: $z-timeline;
-			}
-		}
-	}
+        video {
+            object-position: top;
+        }
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+
+        .play-pause {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .seeker-slider-container {
+            display: flex;
+            flex-direction: row;
+            width: 80%;
+            align-items: center;
+
+            .event-marker {
+                $size: 15px;
+                width: $size;
+                height: $size;
+                border-radius: calc($size / 2);
+                position: absolute;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                background-color: adjust-color(rgb(255, 0, 30));
+                pointer-events: none;
+                z-index: $z-timeline-event-marker;
+            }
+
+            .segment-marker {
+                position: absolute;
+                width: 1px;
+                transform: translateX(-50%);
+                pointer-events: none;
+                top: 0;
+                bottom: 0;
+                background-color: #424242;
+                z-index: $z-timeline-segment-marker;
+            }
+
+            .time-container {
+                flex-shrink: 0;
+            }
+
+            .slider-container {
+                margin: 0 15px;
+                position: relative;
+                flex-grow: 1;
+                display: flex;
+            }
+
+            .mud-slider {
+                z-index: $z-timeline;
+            }
+        }
+    }
 }

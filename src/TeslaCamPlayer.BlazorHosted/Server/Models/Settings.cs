@@ -2,5 +2,5 @@
 
 public class Settings
 {
-	public string ClipsRootPath { get; set; }
+    public string ClipsRootPath { get; set; }
 }

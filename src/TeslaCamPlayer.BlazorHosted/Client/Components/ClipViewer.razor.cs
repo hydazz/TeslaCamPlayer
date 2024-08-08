@@ -12,278 +12,289 @@ namespace TeslaCamPlayer.BlazorHosted.Client.Components;
 
 public partial class ClipViewer : ComponentBase
 {
-	private static readonly TimeSpan TimelineScrubTimeout = TimeSpan.FromSeconds(2);
-	
-	[Inject]
-	public IJSRuntime JsRuntime { get; set; }
-	
-	[Parameter]
-	public EventCallback PreviousButtonClicked { get; set; }
-	
-	[Parameter]
-	public EventCallback NextButtonClicked { get; set; }
+    private static readonly TimeSpan TimelineScrubTimeout = TimeSpan.FromSeconds(2);
 
-	private double TimelineValue
-	{
-		get => _timelineValue;
-		set
-		{
-			_timelineValue = value;
-			if (_isScrubbing)
-				_setVideoTimeDebounceTimer.Enabled = true;
-		}
-	}
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; }
 
-	private Clip _clip;
-	private VideoPlayer _videoPlayerFront;
-	private VideoPlayer _videoPlayerLeftRepeater;
-	private VideoPlayer _videoPlayerRightRepeater;
-	private VideoPlayer _videoPlayerBack;
-	private int _videoLoadedEventCount = 0;
-	private bool _isPlaying;
-	private ClipVideoSegment _currentSegment;
-	private MudSlider<double> _timelineSlider;
-	private double _timelineMaxSeconds;
-	private double _ignoreTimelineValue;
-	private bool _wasPlayingBeforeScrub;
-	private bool _isScrubbing;
-	private double _timelineValue;
-	private System.Timers.Timer _setVideoTimeDebounceTimer;
-	private CancellationTokenSource _loadSegmentCts = new();
+    [Parameter]
+    public EventCallback PreviousButtonClicked { get; set; }
 
-	protected override void OnInitialized()
-	{
-		_setVideoTimeDebounceTimer = new(500);
-		_setVideoTimeDebounceTimer.Elapsed += ScrubVideoDebounceTick;
-	}
+    [Parameter]
+    public EventCallback NextButtonClicked { get; set; }
 
-	protected override void OnAfterRender(bool firstRender)
-	{
-		if (!firstRender)
-			return;
+    private double TimelineValue
+    {
+        get => _timelineValue;
+        set
+        {
+            _timelineValue = value;
+            if (_isScrubbing)
+                _setVideoTimeDebounceTimer.Enabled = true;
+        }
+    }
 
-		_videoPlayerFront.Loaded += () =>
-		{
-			Console.WriteLine("Loaded: Front");
-			_videoLoadedEventCount++;
-		};
-		_videoPlayerLeftRepeater.Loaded += () =>
-		{
-			Console.WriteLine("Loaded: Left");
-			_videoLoadedEventCount++;
-		};
-		_videoPlayerRightRepeater.Loaded += () =>
-		{
-			Console.WriteLine("Loaded: Right");
-			_videoLoadedEventCount++;
-		};
-		_videoPlayerBack.Loaded += () =>
-		{
-			Console.WriteLine("Loaded: Back");
-			_videoLoadedEventCount++;
-		};
-	}
+    private Clip _clip;
+    private VideoPlayer _videoPlayerFront;
+    private VideoPlayer _videoPlayerLeftRepeater;
+    private VideoPlayer _videoPlayerRightRepeater;
+    private VideoPlayer _videoPlayerBack;
+    private int _videoLoadedEventCount = 0;
+    private bool _isPlaying;
+    private ClipVideoSegment _currentSegment;
+    private MudSlider<double> _timelineSlider;
+    private double _timelineMaxSeconds;
+    private double _ignoreTimelineValue;
+    private bool _wasPlayingBeforeScrub;
+    private bool _isScrubbing;
+    private double _timelineValue;
+    private System.Timers.Timer _setVideoTimeDebounceTimer;
+    private CancellationTokenSource _loadSegmentCts = new();
 
-	private static Task AwaitUiUpdate()
-		=> Task.Delay(100);
+    protected override void OnInitialized()
+    {
+        _setVideoTimeDebounceTimer = new(500);
+        _setVideoTimeDebounceTimer.Elapsed += ScrubVideoDebounceTick;
+    }
 
-	public async Task SetClipAsync(Clip clip)
-	{
-		_clip = clip;
-		TimelineValue = 0;
-		_timelineMaxSeconds = (clip.EndDate - clip.StartDate).TotalSeconds;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+            return;
 
-		_currentSegment = _clip.Segments.First();
-		await SetCurrentSegmentVideosAsync();
-	}
+        _videoPlayerFront.Loaded += () =>
+        {
+            Console.WriteLine("Loaded: Front");
+            _videoLoadedEventCount++;
+        };
+        _videoPlayerLeftRepeater.Loaded += () =>
+        {
+            Console.WriteLine("Loaded: Left");
+            _videoLoadedEventCount++;
+        };
+        _videoPlayerRightRepeater.Loaded += () =>
+        {
+            Console.WriteLine("Loaded: Right");
+            _videoLoadedEventCount++;
+        };
+        _videoPlayerBack.Loaded += () =>
+        {
+            Console.WriteLine("Loaded: Back");
+            _videoLoadedEventCount++;
+        };
+    }
 
-	private async Task<bool> SetCurrentSegmentVideosAsync()
-	{
-		if (_currentSegment == null)
-			return false;
+    private static Task AwaitUiUpdate()
+        => Task.Delay(100);
 
-		await _loadSegmentCts.CancelAsync();
-		_loadSegmentCts = new();
-		
-		_videoLoadedEventCount = 0;
-		var cameraCount = _currentSegment.CameraAnglesCount();
+    public async Task SetClipAsync(Clip clip)
+    {
+        _clip = clip;
+        TimelineValue = 0;
+        _timelineMaxSeconds = (clip.EndDate - clip.StartDate).TotalSeconds;
 
-		var wasPlaying = _isPlaying;
-		if (wasPlaying)
-			await TogglePlayingAsync(false);
-		
-		_videoPlayerFront.Src = _currentSegment.CameraFront?.Url;
-		_videoPlayerLeftRepeater.Src = _currentSegment.CameraLeftRepeater?.Url;
-		_videoPlayerRightRepeater.Src = _currentSegment.CameraRightRepeater?.Url;
-		_videoPlayerBack.Src = _currentSegment.CameraBack?.Url;
+        _currentSegment = _clip.Segments.First();
+        await SetCurrentSegmentVideosAsync();
+    }
 
-		if (_loadSegmentCts.IsCancellationRequested)
-			return false;
-		
-		await InvokeAsync(StateHasChanged);
+    private string GetCurrentScrubTime()
+    {
+        if (_clip == null)
+        {
+            return ""; // for when no clip is selected
+        }
 
-		var timeout = Task.Delay(10000);
-		var completedTask = await Task.WhenAny(Task.Run(async () =>
-		{
-			while (_videoLoadedEventCount < cameraCount && !_loadSegmentCts.IsCancellationRequested)
-				await Task.Delay(10, _loadSegmentCts.Token);
-			
-			Console.WriteLine("Loading done");
-		}, _loadSegmentCts.Token), timeout);
+        var currentTime = _clip.StartDate.AddSeconds(TimelineValue);
+        return currentTime.ToString("hh:mm:ss tt");
+    }
 
-		if (completedTask == timeout)
-		{
-			Console.WriteLine("Loading timed out");
-			return false;
-		}
+    private async Task<bool> SetCurrentSegmentVideosAsync()
+    {
+        if (_currentSegment == null)
+            return false;
 
-		if (wasPlaying)
-			await TogglePlayingAsync(true);
+        await _loadSegmentCts.CancelAsync();
+        _loadSegmentCts = new();
 
-		return !_loadSegmentCts.IsCancellationRequested;
-	}
+        _videoLoadedEventCount = 0;
+        var cameraCount = _currentSegment.CameraAnglesCount();
 
-	private async Task ExecuteOnPlayers(Func<VideoPlayer, Task> action)
-	{
-		try
-		{
-			await action(_videoPlayerFront);
-			await action(_videoPlayerLeftRepeater);
-			await action(_videoPlayerRightRepeater);
-			await action(_videoPlayerBack);
-		}
-		catch
-		{
-			// ignore
-		}
-	}
+        var wasPlaying = _isPlaying;
+        if (wasPlaying)
+            await TogglePlayingAsync(false);
 
-	private Task TogglePlayingAsync(bool? play = null)
-	{
-		play ??= !_isPlaying;
-		_isPlaying = play.Value;
-		return ExecuteOnPlayers(async p => await (play.Value ? p.PlayAsync() : p.PauseAsync()));
-	}
+        _videoPlayerFront.Src = _currentSegment.CameraFront?.Url;
+        _videoPlayerLeftRepeater.Src = _currentSegment.CameraLeftRepeater?.Url;
+        _videoPlayerRightRepeater.Src = _currentSegment.CameraRightRepeater?.Url;
+        _videoPlayerBack.Src = _currentSegment.CameraBack?.Url;
 
-	private Task PlayPauseClicked()
-		=> TogglePlayingAsync();
+        if (_loadSegmentCts.IsCancellationRequested)
+            return false;
 
-	private async Task VideoEnded()
-	{
-		if (_currentSegment == _clip.Segments.Last())
-			return;
+        await InvokeAsync(StateHasChanged);
 
-		await TogglePlayingAsync(false);
+        var timeout = Task.Delay(10000);
+        var completedTask = await Task.WhenAny(Task.Run(async () =>
+        {
+            while (_videoLoadedEventCount < cameraCount && !_loadSegmentCts.IsCancellationRequested)
+                await Task.Delay(10, _loadSegmentCts.Token);
 
-		var nextSegment = _clip.Segments
-			.OrderBy(s => s.StartDate)
-			.SkipWhile(s => s != _currentSegment)
-			.Skip(1)
-			.FirstOrDefault()
-			?? _clip.Segments.FirstOrDefault();
+            Console.WriteLine("Loading done");
+        }, _loadSegmentCts.Token), timeout);
 
-		if (nextSegment == null)
-		{
-			await TogglePlayingAsync(false);
-			return;
-		}
+        if (completedTask == timeout)
+        {
+            Console.WriteLine("Loading timed out");
+            return false;
+        }
 
-		_currentSegment = nextSegment;
-		await SetCurrentSegmentVideosAsync();
-		await AwaitUiUpdate();
-		await TogglePlayingAsync(true);
-	}
+        if (wasPlaying)
+            await TogglePlayingAsync(true);
 
-	private async Task FrontVideoTimeUpdate()
-	{
-		if (_currentSegment == null)
-			return;
+        return !_loadSegmentCts.IsCancellationRequested;
+    }
 
-		if (_isScrubbing)
-			return;
-		
-		var seconds = await _videoPlayerFront.GetTimeAsync();
-		var currentTime = _currentSegment.StartDate.AddSeconds(seconds);
-		var secondsSinceClipStart = (currentTime - _clip.StartDate).TotalSeconds;
-		
-		_ignoreTimelineValue = secondsSinceClipStart;
-		TimelineValue = secondsSinceClipStart;
-	}
+    private async Task ExecuteOnPlayers(Func<VideoPlayer, Task> action)
+    {
+        try
+        {
+            await action(_videoPlayerFront);
+            await action(_videoPlayerLeftRepeater);
+            await action(_videoPlayerRightRepeater);
+            await action(_videoPlayerBack);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
 
-	private async Task TimelineSliderPointerDown()
-	{
-		_isScrubbing = true;
-		_wasPlayingBeforeScrub = _isPlaying;
-		await TogglePlayingAsync(false);
-		
-		// Allow value change event to trigger, then scrub before user releases mouse click
-		await AwaitUiUpdate();
-		await ScrubToSliderTime();
-	}
+    private Task TogglePlayingAsync(bool? play = null)
+    {
+        play ??= !_isPlaying;
+        _isPlaying = play.Value;
+        return ExecuteOnPlayers(async p => await (play.Value ? p.PlayAsync() : p.PauseAsync()));
+    }
 
-	private async Task TimelineSliderPointerUp()
-	{
-		Console.WriteLine("Pointer up");
-		await ScrubToSliderTime();
-		_isScrubbing = false;
-			
-		if (!_isPlaying && _wasPlayingBeforeScrub)
-			await TogglePlayingAsync(true);
-	}
+    private Task PlayPauseClicked()
+        => TogglePlayingAsync();
 
-	private async void ScrubVideoDebounceTick(object _, ElapsedEventArgs __)
-		=> await ScrubToSliderTime();
+    private async Task VideoEnded()
+    {
+        if (_currentSegment == _clip.Segments.Last())
+            return;
 
-	private async Task ScrubToSliderTime()
-	{
-		_setVideoTimeDebounceTimer.Enabled = false;
-		
-		if (!_isScrubbing)
-			return;
+        await TogglePlayingAsync(false);
 
-		try
-		{
-			var scrubToDate = _clip.StartDate.AddSeconds(TimelineValue);
-			var segment = _clip.SegmentAtDate(scrubToDate)
-				?? _clip.Segments.Where(s => s.StartDate > scrubToDate).MinBy(s => s.StartDate);
+        var nextSegment = _clip.Segments
+            .OrderBy(s => s.StartDate)
+            .SkipWhile(s => s != _currentSegment)
+            .Skip(1)
+            .FirstOrDefault()
+            ?? _clip.Segments.FirstOrDefault();
 
-			if (segment == null)
-				return;
+        if (nextSegment == null)
+        {
+            await TogglePlayingAsync(false);
+            return;
+        }
 
-			if (segment != _currentSegment)
-			{
-				_currentSegment = segment;
-				if (!await SetCurrentSegmentVideosAsync())
-					return;
-			}
+        _currentSegment = nextSegment;
+        await SetCurrentSegmentVideosAsync();
+        await AwaitUiUpdate();
+        await TogglePlayingAsync(true);
+    }
 
-			var secondsIntoSegment = (scrubToDate - segment.StartDate).TotalSeconds;
-			await ExecuteOnPlayers(async p => await p.SetTimeAsync(secondsIntoSegment));
-		}
-		catch
-		{
-			// ignore, happens sometimes
-		}
-	}
+    private async Task FrontVideoTimeUpdate()
+    {
+        if (_currentSegment == null)
+            return;
 
-	private double DateTimeToTimelinePercentage(DateTime dateTime)
-	{
-		var percentage = Math.Round(dateTime.Subtract(_clip.StartDate).TotalSeconds / _clip.TotalSeconds * 100, 2);
-		return Math.Clamp(percentage, 0, 100);
-	}
+        if (_isScrubbing)
+            return;
 
-	private string SegmentStartMargerStyle(ClipVideoSegment segment)
-	{
-		var percentage = DateTimeToTimelinePercentage(segment.StartDate);
-		return $"left: {percentage}%";
-	}
+        var seconds = await _videoPlayerFront.GetTimeAsync();
+        var currentTime = _currentSegment.StartDate.AddSeconds(seconds);
+        var secondsSinceClipStart = (currentTime - _clip.StartDate).TotalSeconds;
 
-	private string EventMarkerStyle()
-	{
-		if (_clip?.Event?.Timestamp == null)
-			return "display: none";
+        _ignoreTimelineValue = secondsSinceClipStart;
+        TimelineValue = secondsSinceClipStart;
+    }
 
-		var percentage = DateTimeToTimelinePercentage(_clip.Event.Timestamp);
-		return $"left: {percentage}%";
-	}
+    private async Task TimelineSliderPointerDown()
+    {
+        _isScrubbing = true;
+        _wasPlayingBeforeScrub = _isPlaying;
+        await TogglePlayingAsync(false);
+
+        // Allow value change event to trigger, then scrub before user releases mouse click
+        await AwaitUiUpdate();
+        await ScrubToSliderTime();
+    }
+
+    private async Task TimelineSliderPointerUp()
+    {
+        Console.WriteLine("Pointer up");
+        await ScrubToSliderTime();
+        _isScrubbing = false;
+
+        if (!_isPlaying && _wasPlayingBeforeScrub)
+            await TogglePlayingAsync(true);
+    }
+
+    private async void ScrubVideoDebounceTick(object _, ElapsedEventArgs __)
+        => await ScrubToSliderTime();
+
+    private async Task ScrubToSliderTime()
+    {
+        _setVideoTimeDebounceTimer.Enabled = false;
+
+        if (!_isScrubbing)
+            return;
+
+        try
+        {
+            var scrubToDate = _clip.StartDate.AddSeconds(TimelineValue);
+            var segment = _clip.SegmentAtDate(scrubToDate)
+                ?? _clip.Segments.Where(s => s.StartDate > scrubToDate).MinBy(s => s.StartDate);
+
+            if (segment == null)
+                return;
+
+            if (segment != _currentSegment)
+            {
+                _currentSegment = segment;
+                if (!await SetCurrentSegmentVideosAsync())
+                    return;
+            }
+
+            var secondsIntoSegment = (scrubToDate - segment.StartDate).TotalSeconds;
+            await ExecuteOnPlayers(async p => await p.SetTimeAsync(secondsIntoSegment));
+        }
+        catch
+        {
+            // ignore, happens sometimes
+        }
+    }
+
+    private double DateTimeToTimelinePercentage(DateTime dateTime)
+    {
+        var percentage = Math.Round(dateTime.Subtract(_clip.StartDate).TotalSeconds / _clip.TotalSeconds * 100, 2);
+        return Math.Clamp(percentage, 0, 100);
+    }
+
+    private string SegmentStartMargerStyle(ClipVideoSegment segment)
+    {
+        var percentage = DateTimeToTimelinePercentage(segment.StartDate);
+        return $"left: {percentage}%";
+    }
+
+    private string EventMarkerStyle()
+    {
+        if (_clip?.Event?.Timestamp == null)
+            return "display: none";
+
+        var percentage = DateTimeToTimelinePercentage(_clip.Event.Timestamp);
+        return $"left: {percentage}%";
+    }
 }

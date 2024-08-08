@@ -16,22 +16,22 @@ First release, still needs some work, but functional and might be just what you 
 
 ### Implemented
 
-- Infinite scrolling list of events (virtualized)
-- Icons to easily identify events (sentry/dashcam/honk/movement detected/manual save)
-- Calendar to easily go to a certain date
-- Auto scaling viewer
-- Supports MCU-1 (3 camera, missing back cam) and/or missing/corrupt angles
-- Event time marker on timeline
-- Filtering events
-- RecentClips viewing
+-   Infinite scrolling list of events (virtualized)
+-   Icons to easily identify events (sentry/dashcam/honk/movement detected/manual save)
+-   Calendar to easily go to a certain date
+-   Auto scaling viewer
+-   Supports MCU-1 (3 camera, missing back cam) and/or missing/corrupt angles
+-   Event time marker on timeline
+-   Filtering events
+-   RecentClips viewing
 
 ### TODO/missing
 
-- Mobile viewport support
-- Progress bar for loading. Initial load checks the length of each video file, this may take a moment.
-- Map for event location
-- Exporting clips
-- General small issues
+-   Mobile viewport support
+-   Progress bar for loading. Initial load checks the length of each video file, this may take a moment.
+-   Map for event location
+-   Exporting clips
+-   General small issues
 
 ## Windows
 
@@ -89,10 +89,10 @@ pls no sue kthx
 This software is in no way, shape or form affiliated with Tesla, Inc. (https://www.tesla.com/), or its products.
 This software is not:
 
-- An official Tesla product
-- Licensed by Tesla
-- Built by or in conjunction with Tesla
-- Commisioned by Tesla
+-   An official Tesla product
+-   Licensed by Tesla
+-   Built by or in conjunction with Tesla
+-   Commisioned by Tesla
 
 It does not directly impact Tesla products. It is an aftermarket piece of software that processes data produced by Tesla vehicles.
 

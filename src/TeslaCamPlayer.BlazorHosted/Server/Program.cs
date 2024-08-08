@@ -6,9 +6,9 @@ using TeslaCamPlayer.BlazorHosted.Server.Services;
 using TeslaCamPlayer.BlazorHosted.Server.Services.Interfaces;
 
 Log.Logger = new LoggerConfiguration()
-	.MinimumLevel.Is(LogEventLevel.Verbose)
-	.WriteTo.Console()
-	.CreateLogger();
+    .MinimumLevel.Is(LogEventLevel.Verbose)
+    .WriteTo.Console()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,25 +27,25 @@ var app = builder.Build();
 var clipsRootPath = app.Services.GetService<ISettingsProvider>()!.Settings.ClipsRootPath;
 try
 {
-	if (!Directory.Exists(clipsRootPath))
-		throw new Exception("Configured clips root path doesn't exist, or no permission to access: " + clipsRootPath);
+    if (!Directory.Exists(clipsRootPath))
+        throw new Exception("Configured clips root path doesn't exist, or no permission to access: " + clipsRootPath);
 }
 catch (Exception e)
 {
-	Log.Fatal(e, e.Message);
-	return;
+    Log.Fatal(e, e.Message);
+    return;
 }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-	app.UseWebAssemblyDebugging();
+    app.UseWebAssemblyDebugging();
 }
 else
 {
-	app.UseExceptionHandler("/Error");
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-	app.UseHsts();
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
