@@ -50,6 +50,7 @@ public partial class ClipViewer : ComponentBase
     private double _timelineValue;
     private System.Timers.Timer _setVideoTimeDebounceTimer;
     private CancellationTokenSource _loadSegmentCts = new();
+    private string mainVideoKey = "128D7AB3"; // should be set to the camera who initiated the event
 
     protected override void OnInitialized()
     {
@@ -95,6 +96,33 @@ public partial class ClipViewer : ComponentBase
 
         _currentSegment = _clip.Segments.First();
         await SetCurrentSegmentVideosAsync();
+    }
+
+    private void SwitchMainVideo(string newMainVideoKey)
+    {
+        mainVideoKey = newMainVideoKey;
+    }
+
+    private string GetVideoClass(string videoKey)
+    {
+        if (videoKey == mainVideoKey)
+            return "video main-video";
+        else
+        {
+            return videoKey switch
+            {
+                "128D7AB3" => "video small-video top-left-video",
+                "66EC38D4" => "video small-video top-right-video",
+                "87B15DCA" => "video small-video bottom-left-video",
+                "D1916B24" => "video small-video bottom-right-video",
+                _ => "video small-video"
+            };
+        }
+    }
+
+    private string GetPlayerClass(string videoKey)
+    {
+        return videoKey == mainVideoKey ? "video main-video" : "video small-video-style";
     }
 
     private string GetCurrentScrubTime()

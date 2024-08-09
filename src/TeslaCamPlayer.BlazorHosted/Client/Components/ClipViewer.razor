@@ -1,13 +1,19 @@
 ﻿@using TeslaCamPlayer.BlazorHosted.Shared.Models
 
 <div class="viewer">
-    <div class="top-row">
-        <VideoPlayer @key="@("128D7AB3")" @ref="_videoPlayerFront" Class="video video--front" VideoEnded="VideoEnded" TimeUpdate="FrontVideoTimeUpdate" />
-    </div>
-    <div class="bottom-row">
-        <VideoPlayer @key="@("87B15DCA")" @ref="_videoPlayerRightRepeater" Class="video video--right-repeater" VideoEnded="VideoEnded" />
-        <VideoPlayer @key="@("66EC38D4")" @ref="_videoPlayerBack" Class="video video--back" VideoEnded="VideoEnded" />
-        <VideoPlayer @key="@("D1916B24")" @ref="_videoPlayerLeftRepeater" Class="video video--left-repeater" VideoEnded="VideoEnded" />
+    <div class="video-container">
+        <div @onclick="@(() => SwitchMainVideo("128D7AB3"))" class="@GetVideoClass("128D7AB3")">
+            <VideoPlayer @key="@("128D7AB3")" @ref="_videoPlayerFront" Class="@GetPlayerClass("128D7AB3")" VideoEnded="VideoEnded" TimeUpdate="FrontVideoTimeUpdate" />
+        </div>
+        <div @onclick="@(() => SwitchMainVideo("87B15DCA"))" class="@GetVideoClass("87B15DCA")">
+            <VideoPlayer @key="@("87B15DCA")" @ref="_videoPlayerRightRepeater" Class="@GetPlayerClass("87B15DCA")" VideoEnded="VideoEnded" />
+        </div>
+        <div @onclick="@(() => SwitchMainVideo("66EC38D4"))" class="@GetVideoClass("66EC38D4")">
+            <VideoPlayer @key="@("66EC38D4")" @ref="_videoPlayerBack" Class="@GetPlayerClass("66EC38D4")" VideoEnded="VideoEnded" />
+        </div>
+        <div @onclick="@(() => SwitchMainVideo("D1916B24"))" class="@GetVideoClass("D1916B24")">
+            <VideoPlayer @key="@("D1916B24")" @ref="_videoPlayerLeftRepeater" Class="@GetPlayerClass("D1916B24")" VideoEnded="VideoEnded" />
+        </div>
     </div>
     <div class="controls">
         <div class="play-pause">
