@@ -21,7 +21,6 @@ else
             <MudDrawerHeader>
                 <MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
             </MudDrawerHeader>
-            <div>
                 <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
                 FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
                 @onmousewheel="@DatePickerOnMouseWheel" />
@@ -85,7 +84,6 @@ else
                         </Placeholder>
                     </Virtualize>
                 </div>
-            </div>
 
         </MudDrawer>
         <MudMainContent Class="viewer-container">

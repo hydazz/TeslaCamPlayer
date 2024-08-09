@@ -55,7 +55,7 @@
             align-items: center;
 
             .event-marker {
-                $size: 15px;
+                $size: 12px;
                 width: $size;
                 height: $size;
                 border-radius: calc($size / 2);
@@ -70,11 +70,11 @@
             .segment-marker {
                 position: absolute;
                 width: 1px;
+                height: 15px;
                 transform: translateX(-50%);
                 pointer-events: none;
-                top: 0;
-                bottom: 0;
-                background-color: #424242;
+                top: 25%;
+                background-color: #6f6d6d;
                 z-index: $z-timeline-segment-marker;
             }
 
