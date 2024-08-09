@@ -1,11 +1,7 @@
 @inherits ComponentBase
-
 <MudDialog>
-    <TitleContent>
-        Confirm Delete
-    </TitleContent>
-    <DialogContent>
-        Are you sure you want to delete the selected event?
+    <TitleContent>Confirm Delete</TitleContent>
+    <DialogContent>Are you sure you want to delete the selected event?
         <p></p>
         <b>This is NOT reversible!</b>
     </DialogContent>
@@ -14,7 +10,6 @@
         <MudButton OnClick="@Submit" Color="Color.Error">Delete</MudButton>
     </DialogActions>
 </MudDialog>
-
 @code {
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; }

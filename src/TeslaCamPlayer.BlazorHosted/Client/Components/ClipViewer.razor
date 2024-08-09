@@ -30,7 +30,7 @@
                 <div class="event-marker" style="@EventMarkerStyle()"></div>
                 @foreach (var segment in _clip?.Segments ?? Array.Empty<ClipVideoSegment>())
                 {
-                                <div class="segment-marker" style="@SegmentStartMargerStyle(segment)"></div>
+                    <div class="segment-marker" style="@SegmentStartMarkerStyle(segment)"></div>
                 }
             </div>
             <div class="time-container">@_clip?.EndDate.ToString("hh:mm:ss tt")</div>

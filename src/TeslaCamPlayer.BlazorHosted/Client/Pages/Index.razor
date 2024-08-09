@@ -4,29 +4,38 @@
 
 @if (_filteredclips == null)
 {
-        <div class="loading-screen">
-        Loading...
+    <div class="loading-screen">
+        <div>Indexing events, please wait...</div>
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
     </div>
 }
 else
 {
-        <div class="main-content">
-        <div class="@(_isBrowserCollapsed ? "browser collapsed" : "browser")"> <!-- TODO use blazor drawer? -->
-            <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/hydazz/TeslaCamPlayer" Target="_blank" />
+        </MudAppBar>
+        <MudDrawer @bind-Open="@_isBrowserCollapsed" Elevation="1">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
+            </MudDrawerHeader>
+            <div>
+                <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
                 FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
                 @onmousewheel="@DatePickerOnMouseWheel" />
 
-            <MudToolBar Class="py-2">
-                <MudTooltip Text="Refresh Events">
-                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
-                        OnClick="@(() => RefreshEventsAsync(true))" />
-                </MudTooltip>
-                <MudTooltip Text="Delete Selected Event">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                        OnClick="@OpenDeleteConfirmationDialog" />
-                </MudTooltip>
-                <MudSpacer />
-                <div>
+                <MudToolBar Class="py-2">
+                    <MudTooltip Text="Refresh Events">
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                            OnClick="@(() => RefreshEventsAsync(true))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete Selected Event">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                            OnClick="@OpenDeleteConfirmationDialog" />
+                    </MudTooltip>
+                    <MudSpacer />
                     <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter" />
 
                     <MudPopover @bind-Open="_showFilter" AnchorOrigin="Origin.CenterLeft"
@@ -34,24 +43,23 @@ else
                         <EventFilter Values="_eventFilter" ValuesChanged="EventFilterValuesChanged" />
                     </MudPopover>
                     <MudOverlay @bind-Visible="_showFilter" OnClick="ToggleFilter" />
-                </div>
-            </MudToolBar>
+                </MudToolBar>
 
-            <div @ref="_eventsList" class="events-list" @onscroll="EventListScrolled">
-                <Virtualize TItem="Clip" ItemSize="@EventItemHeight" Items="@_filteredclips" OverscanCount="10">
-                    <ItemContent>
-                        <div class="event @(_activeClip == context ? "event--active" : null)" @key="@context.EndDate"
+                <div @ref="_eventsList" class="events-list" @onscroll="EventListScrolled">
+                    <Virtualize TItem="Clip" ItemSize="@EventItemHeight" Items="@_filteredclips" OverscanCount="10">
+                        <ItemContent>
+                            <div class="event @(_activeClip == context ? "event--active" : null)" @key="@context.EndDate"
                             @onclick="@(() => SetActiveClip(context))">
-                            @if (!string.IsNullOrWhiteSpace(context.ThumbnailUrl))
-                            {
-                                        <img class="thumbnail" src="@context.ThumbnailUrl" loading="lazy" />
-                            }
+                                @if (!string.IsNullOrWhiteSpace(context.ThumbnailUrl))
+                                {
+                                    <img class="thumbnail" src="@context.ThumbnailUrl" loading="lazy" />
+                                }
                                 <div class="details ml-2">
                                     <div class="icons">
-                                    @foreach (var icon in GetClipIcons(context))
-                                    {
-                                                <MudIcon Icon="@icon" Size="Size.Small" Class="mr-1" />
-                                    }
+                                        @foreach (var icon in GetClipIcons(context))
+                                        {
+                                            <MudIcon Icon="@icon" Size="Size.Small" Class="mr-1" />
+                                        }
                                     </div>
                                     <div class="date">
                                     @((context.Event?.Timestamp ?? context.StartDate).ToString("dd MMM yy h:mm tt"))
@@ -77,23 +85,21 @@ else
                         </Placeholder>
                     </Virtualize>
                 </div>
-                <div class="browser-footer">
-                    <span>v-placeholder</span>
-                    <a href="https://github.com/hydazz/TeslaCamPlayer" target="_blank">
-                        <MudIcon Icon="@Icons.Custom.Brands.GitHub" />
-                    </a>
-                </div>
             </div>
 
-            <div class="collapse-button-container">
-                <MudIconButton
-                    Icon="@(_isBrowserCollapsed ? Icons.Material.Filled.ArrowForwardIos : Icons.Material.Filled.ArrowBackIos)"
-                    @onclick="ToggleBrowser" Class="toggle-browser-button" />
-            </div>
-
-            <div class="viewer-container">
+        </MudDrawer>
+        <MudMainContent Class="viewer-container">
                 <ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
                     NextButtonClicked="NextButtonClicked" />
-            </div>
-        </div>
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code{
+    private bool _isBrowserCollapsed = true;
+
+    private void ToggleDrawer()
+    {
+        _isBrowserCollapsed = !_isBrowserCollapsed;
+    }
 }

@@ -1,6 +1,10 @@
 ﻿@import "components/*.scss";
-$border-color: #EEE;
+$border-color: #eee;
 $border-color-darken: darken($border-color, 20%);
+
+:root {
+    --mud-drawer-width-left: 310px !important;  /* Set the default width for left drawers */
+}
 
 html,
 body {
@@ -15,13 +19,14 @@ body {
 .loading-screen {
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: 25px;
     font-weight: bold;
 }
 
-.main-content {
+.mud-main-content {
     display: flex;
     height: 100%;
     position: relative;
@@ -33,49 +38,7 @@ body {
         overflow: hidden;
         transition: margin-left 0.3s ease;
     }
-
-    .browser {
-        display: flex;
-        flex-flow: column;
-        flex-shrink: 0;
-        transition: width 0.3s ease;
-        overflow: hidden;
-
-        &.collapsed {
-            width: 0;
-
-            .events-list,
-            .browser-date-picker,
-            .toolbar {
-                display: none;
-            }
-
-            .browser-footer {
-                display: none;
-            }
-        }
-
-        .browser-footer {
-            margin-top: auto; // Pushes the footer to the bottom
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    }
-
-    .collapse-button-container {
-        display: flex;
-        align-items: center;
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 100;
-        /* Ensure it's above other elements */
-    }
 }
-
 
 .events-list {
     overflow-y: auto;

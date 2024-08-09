@@ -33,7 +33,6 @@ public partial class Index : ComponentBase
     private bool _showFilter;
     private bool _filterChanged;
     private EventFilterValues _eventFilter = new();
-    private bool _isBrowserCollapsed = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,12 +40,6 @@ public partial class Index : ComponentBase
         _scrollDebounceTimer.Elapsed += ScrollDebounceTimerTick;
 
         await RefreshEventsAsync(false);
-    }
-
-    private void ToggleBrowser()
-    {
-        _isBrowserCollapsed = !_isBrowserCollapsed;
-        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

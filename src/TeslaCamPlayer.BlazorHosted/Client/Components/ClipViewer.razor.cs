@@ -283,7 +283,7 @@ public partial class ClipViewer : ComponentBase
         return Math.Clamp(percentage, 0, 100);
     }
 
-    private string SegmentStartMargerStyle(ClipVideoSegment segment)
+    private string SegmentStartMarkerStyle(ClipVideoSegment segment)
     {
         var percentage = DateTimeToTimelinePercentage(segment.StartDate);
         return $"left: {percentage}%";
