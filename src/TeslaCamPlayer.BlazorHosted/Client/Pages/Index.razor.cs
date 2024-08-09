@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using MudBlazor;
 using System.Timers;
-using Microsoft.AspNetCore.Components.Web;
 using TeslaCamPlayer.BlazorHosted.Client.Components;
 using TeslaCamPlayer.BlazorHosted.Client.Helpers;
-using TeslaCamPlayer.BlazorHosted.Shared.Models;
 using TeslaCamPlayer.BlazorHosted.Client.Models;
+using TeslaCamPlayer.BlazorHosted.Shared.Models;
 
 namespace TeslaCamPlayer.BlazorHosted.Client.Pages;
 
@@ -71,13 +71,13 @@ public partial class Index : ComponentBase
         var options = new DialogOptions { CloseOnEscapeKey = true };
         var dialog = DialogService.Show<ConfirmDeleteDialog>("Confirm Delete", options);
         var result = await dialog.Result;
-    
+
         if (!result.Cancelled)
         {
             await DeleteEventAsync();
         }
     }
-    
+
     private async Task DeleteEventAsync()
     {
         if (_activeClip != null && !string.IsNullOrEmpty(_activeClip.DirectoryPath))

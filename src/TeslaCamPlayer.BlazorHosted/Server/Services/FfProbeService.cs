@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using Serilog;
+﻿using Serilog;
+using System.Diagnostics;
 using TeslaCamPlayer.BlazorHosted.Server.Services.Interfaces;
 
 namespace TeslaCamPlayer.BlazorHosted.Server.Services;

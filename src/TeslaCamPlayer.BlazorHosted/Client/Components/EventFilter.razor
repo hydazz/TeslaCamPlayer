@@ -4,7 +4,7 @@
         <MudTreeViewItem Expanded="true" Items="@context.TreeItems">
             <Content>
                 <MudCheckBox T="bool?" Checked="@context.IsCheckedState()"
-                    CheckedChanged="@(_ => context.CheckedChanged())">
+                             CheckedChanged="@(_ => context.CheckedChanged())">
                     <div class="d-flex align-center">
                         <MudIcon Icon="@context.Icon" Size="Size.Small" Class="mr-1" />
                         @context.Text

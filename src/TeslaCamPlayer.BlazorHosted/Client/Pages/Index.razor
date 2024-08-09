@@ -21,79 +21,79 @@ else
             <MudDrawerHeader>
                 <MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
             </MudDrawerHeader>
-                <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
-                FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
-                @onmousewheel="@DatePickerOnMouseWheel" />
+            <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
+                           FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
+                           @onmousewheel="@DatePickerOnMouseWheel" />
 
-                <MudToolBar Class="py-2">
-                    <MudTooltip Text="Refresh Events">
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
-                            OnClick="@(() => RefreshEventsAsync(true))" />
-                    </MudTooltip>
-                    <MudTooltip Text="Delete Selected Event">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                            OnClick="@OpenDeleteConfirmationDialog" />
-                    </MudTooltip>
-                    <MudSpacer />
-                    <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter" />
+            <MudToolBar Class="py-2">
+                <MudTooltip Text="Refresh Events">
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                   OnClick="@(() => RefreshEventsAsync(true))" />
+                </MudTooltip>
+                <MudTooltip Text="Delete Selected Event">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                   OnClick="@OpenDeleteConfirmationDialog" />
+                </MudTooltip>
+                <MudSpacer />
+                <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter" />
 
-                    <MudPopover @bind-Open="_showFilter" AnchorOrigin="Origin.CenterLeft"
-                        TransformOrigin="Origin.CenterRight" Class="pa-4">
-                        <EventFilter Values="_eventFilter" ValuesChanged="EventFilterValuesChanged" />
-                    </MudPopover>
-                    <MudOverlay @bind-Visible="_showFilter" OnClick="ToggleFilter" />
-                </MudToolBar>
+                <MudPopover @bind-Open="_showFilter" AnchorOrigin="Origin.CenterLeft"
+                            TransformOrigin="Origin.CenterRight" Class="pa-4">
+                    <EventFilter Values="_eventFilter" ValuesChanged="EventFilterValuesChanged" />
+                </MudPopover>
+                <MudOverlay @bind-Visible="_showFilter" OnClick="ToggleFilter" />
+            </MudToolBar>
 
-                <div @ref="_eventsList" class="events-list" @onscroll="EventListScrolled">
-                    <Virtualize TItem="Clip" ItemSize="@EventItemHeight" Items="@_filteredclips" OverscanCount="10">
-                        <ItemContent>
-                            <div class="event @(_activeClip == context ? "event--active" : null)" @key="@context.EndDate"
-                            @onclick="@(() => SetActiveClip(context))">
-                                @if (!string.IsNullOrWhiteSpace(context.ThumbnailUrl))
-                                {
-                                    <img class="thumbnail" src="@context.ThumbnailUrl" loading="lazy" />
-                                }
-                                <div class="details ml-2">
-                                    <div class="icons">
-                                        @foreach (var icon in GetClipIcons(context))
-                                        {
-                                            <MudIcon Icon="@icon" Size="Size.Small" Class="mr-1" />
-                                        }
-                                    </div>
-                                    <div class="date">
+            <div @ref="_eventsList" class="events-list" @onscroll="EventListScrolled">
+                <Virtualize TItem="Clip" ItemSize="@EventItemHeight" Items="@_filteredclips" OverscanCount="10">
+                    <ItemContent>
+                        <div class="event @(_activeClip == context ? "event--active" : null)" @key="@context.EndDate"
+                             @onclick="@(() => SetActiveClip(context))">
+                            @if (!string.IsNullOrWhiteSpace(context.ThumbnailUrl))
+                            {
+                                <img class="thumbnail" src="@context.ThumbnailUrl" loading="lazy" />
+                            }
+                            <div class="details ml-2">
+                                <div class="icons">
+                                    @foreach (var icon in GetClipIcons(context))
+                                    {
+                                        <MudIcon Icon="@icon" Size="Size.Small" Class="mr-1" />
+                                    }
+                                </div>
+                                <div class="date">
                                     @((context.Event?.Timestamp ?? context.StartDate).ToString("dd MMM yy h:mm tt"))
-                                    </div>
-                                    <div class="location">
+                                </div>
+                                <div class="location">
                                     @context.Event?.City
-                                    </div>
                                 </div>
                             </div>
-                        </ItemContent>
-                        <Placeholder>
-                            <div class="event">
-                                <MudSkeleton Class="thumbnail" Width="66.66px" />
-                                <div class="details ml-2">
-                                    <div class="icons">
-                                        <MudSkeleton Width="20%" />
-                                    </div>
-                                    <div class="date">
-                                        <MudSkeleton Width="80%" />
-                                    </div>
+                        </div>
+                    </ItemContent>
+                    <Placeholder>
+                        <div class="event">
+                            <MudSkeleton Class="thumbnail" Width="66.66px" />
+                            <div class="details ml-2">
+                                <div class="icons">
+                                    <MudSkeleton Width="20%" />
+                                </div>
+                                <div class="date">
+                                    <MudSkeleton Width="80%" />
                                 </div>
                             </div>
-                        </Placeholder>
-                    </Virtualize>
-                </div>
+                        </div>
+                    </Placeholder>
+                </Virtualize>
+            </div>
 
         </MudDrawer>
         <MudMainContent Class="viewer-container">
-                <ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
-                    NextButtonClicked="NextButtonClicked" />
+            <ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
+                        NextButtonClicked="NextButtonClicked" />
         </MudMainContent>
     </MudLayout>
 }
 
-@code{
+@code {
     private bool _isBrowserCollapsed = true;
 
     private void ToggleDrawer()

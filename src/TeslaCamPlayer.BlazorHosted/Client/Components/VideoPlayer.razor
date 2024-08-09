@@ -1,13 +1,12 @@
-﻿<video
-    @key="@Src"
-    @ref="_player"
-    src="@Src"
-    class="@Class
+﻿<video @key="@Src"
+       @ref="_player"
+       src="@Src"
+       class="@Class
 	@(string.IsNullOrWhiteSpace(Src) ? "d-none" : null)"
-    @onended="@VideoEndedHandler"
-    @ontimeupdate="@TimeUpdateHandler"
-    @oncanplaythrough="@OnLoadedData"
-    disableremoteplayback></video>
+       @onended="@VideoEndedHandler"
+       @ontimeupdate="@TimeUpdateHandler"
+       @oncanplaythrough="@OnLoadedData"
+       disableremoteplayback></video>
 
 @code {
     [Inject]
