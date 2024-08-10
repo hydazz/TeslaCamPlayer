@@ -17,13 +17,12 @@ body {
 }
 
 .loading-screen {
-    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 25px;
-    font-weight: bold;
+    height: 100vh;
+    text-align: center;
 }
 
 .mud-main-content {

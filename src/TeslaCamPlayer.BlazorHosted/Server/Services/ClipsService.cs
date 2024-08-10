@@ -10,19 +10,23 @@ namespace TeslaCamPlayer.BlazorHosted.Server.Services;
 public partial class ClipsService : IClipsService
 {
     private const string NoThumbnailImageUrl = "/img/no-thumbnail.png";
-
-    private static readonly string CacheFilePath = Path.Combine(AppContext.BaseDirectory, "clips.json");
     private static readonly Regex FileNameRegex = FileNameRegexGenerated();
     private static Clip[] _cache;
 
     private readonly ISettingsProvider _settingsProvider;
     private readonly IFfProbeService _ffProbeService;
+    private readonly SemaphoreSlim _ffprobeSemaphore;
 
     public ClipsService(ISettingsProvider settingsProvider, IFfProbeService ffProbeService)
     {
         _settingsProvider = settingsProvider;
         _ffProbeService = ffProbeService;
+        // limit the number of ffprobe instances to how many cores we have, otherwise... BOOM!
+        int semaphoreCount = Environment.ProcessorCount;
+        _ffprobeSemaphore = new SemaphoreSlim(semaphoreCount);
     }
+
+    private string CacheFilePath => _settingsProvider.Settings.CacheFilePath ?? Path.Combine(AppContext.BaseDirectory, "clips.json");
 
     private async Task<Clip[]> GetCachedAsync()
         => File.Exists(CacheFilePath)
@@ -137,52 +141,60 @@ public partial class ClipsService : IClipsService
 
     private async Task<VideoFile> ParseVideoFileAsync(string path, Match regexMatch)
     {
-        var clipType = regexMatch.Groups["type"].Value switch
+        await _ffprobeSemaphore.WaitAsync();
+        try
         {
-            "RecentClips" => ClipType.Recent,
-            "SavedClips" => ClipType.Saved,
-            "SentryClips" => ClipType.Sentry,
-            _ => ClipType.Unknown
-        };
+            var clipType = regexMatch.Groups["type"].Value switch
+            {
+                "RecentClips" => ClipType.Recent,
+                "SavedClips" => ClipType.Saved,
+                "SentryClips" => ClipType.Sentry,
+                _ => ClipType.Unknown
+            };
 
-        var camera = regexMatch.Groups["camera"].Value switch
-        {
-            "back" => Cameras.Back,
-            "front" => Cameras.Front,
-            "left_repeater" => Cameras.LeftRepeater,
-            "right_repeater" => Cameras.RightRepeater,
-            _ => Cameras.Unknown
-        };
+            var camera = regexMatch.Groups["camera"].Value switch
+            {
+                "back" => Cameras.Back,
+                "front" => Cameras.Front,
+                "left_repeater" => Cameras.LeftRepeater,
+                "right_repeater" => Cameras.RightRepeater,
+                _ => Cameras.Unknown
+            };
 
-        var date = new DateTime(
-            int.Parse(regexMatch.Groups["vyear"].Value),
-            int.Parse(regexMatch.Groups["vmonth"].Value),
-            int.Parse(regexMatch.Groups["vday"].Value),
-            int.Parse(regexMatch.Groups["vhour"].Value),
-            int.Parse(regexMatch.Groups["vminute"].Value),
-            int.Parse(regexMatch.Groups["vsecond"].Value));
+            var date = new DateTime(
+                int.Parse(regexMatch.Groups["vyear"].Value),
+                int.Parse(regexMatch.Groups["vmonth"].Value),
+                int.Parse(regexMatch.Groups["vday"].Value),
+                int.Parse(regexMatch.Groups["vhour"].Value),
+                int.Parse(regexMatch.Groups["vminute"].Value),
+                int.Parse(regexMatch.Groups["vsecond"].Value));
 
-        var duration = await _ffProbeService.GetVideoFileDurationAsync(path);
-        if (!duration.HasValue)
-        {
-            Log.Error("Failed to get duration for video file {Path}", path);
-            return null;
+            var duration = await _ffProbeService.GetVideoFileDurationAsync(path);
+            if (!duration.HasValue)
+            {
+                Log.Error("Failed to get duration for video file {Path}", path);
+                return null;
+            }
+
+            var eventFolderName = clipType != ClipType.Recent
+                ? regexMatch.Groups["event"].Value
+                : null;
+
+            return new VideoFile
+            {
+                FilePath = path,
+                Url = $"/Api/Video/{Uri.EscapeDataString(path)}",
+                EventFolderName = eventFolderName,
+                ClipType = clipType,
+                StartDate = date,
+                Camera = camera,
+                Duration = duration.Value
+            };
         }
-
-        var eventFolderName = clipType != ClipType.Recent
-            ? regexMatch.Groups["event"].Value
-            : null;
-
-        return new VideoFile
+        finally
         {
-            FilePath = path,
-            Url = $"/Api/Video/{Uri.EscapeDataString(path)}",
-            EventFolderName = eventFolderName,
-            ClipType = clipType,
-            StartDate = date,
-            Camera = camera,
-            Duration = duration.Value
-        };
+            _ffprobeSemaphore.Release();
+        }
     }
 
     private static Clip ParseClip(string eventFolderName, IEnumerable<VideoFile> videoFiles)

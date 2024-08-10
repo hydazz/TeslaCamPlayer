@@ -3,4 +3,5 @@
 public class Settings
 {
     public string ClipsRootPath { get; set; }
+    public string CacheFilePath { get; set; }
 }

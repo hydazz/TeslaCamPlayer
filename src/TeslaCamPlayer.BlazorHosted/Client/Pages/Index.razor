@@ -2,25 +2,25 @@
 @using TeslaCamPlayer.BlazorHosted.Shared.Models
 @inject IDialogService DialogService
 
-@if (_filteredclips == null)
-{
-    <div class="loading-screen">
-        <div>Indexing events, please wait...</div>
-        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
-    </div>
-}
-else
-{
-    <MudLayout>
-        <MudAppBar Elevation="1">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudSpacer />
-            <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/hydazz/TeslaCamPlayer" Target="_blank" />
-        </MudAppBar>
-        <MudDrawer @bind-Open="@_isBrowserCollapsed" Elevation="1">
-            <MudDrawerHeader>
-                <MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
-            </MudDrawerHeader>
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/hydazz/TeslaCamPlayer" Target="_blank" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@_isBrowserCollapsed" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
+        </MudDrawerHeader>
+        @if (_filteredclips == null)
+        {
+            <div class="loading-screen">
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                <MudText Typo="Typo.body1">Indexing events, this can take a while depending on how many videos there are to index!</MudText>
+            </div>
+        }
+        else
+        {
             <MudDatePicker @ref="_datePicker" PickerVariant="PickerVariant.Static" IsDateDisabledFunc="IsDateDisabledFunc"
                            FirstDayOfWeek="DayOfWeek.Monday" Class="browser-date-picker" DateChanged="DatePicked"
                            @onmousewheel="@DatePickerOnMouseWheel" />
@@ -84,14 +84,13 @@ else
                     </Placeholder>
                 </Virtualize>
             </div>
-
-        </MudDrawer>
-        <MudMainContent Class="viewer-container">
-            <ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
-                        NextButtonClicked="NextButtonClicked" />
-        </MudMainContent>
-    </MudLayout>
-}
+        }
+    </MudDrawer>
+    <MudMainContent Class="viewer-container">
+        <ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
+            NextButtonClicked="NextButtonClicked" />
+    </MudMainContent>
+</MudLayout>
 
 @code {
     private bool _isBrowserCollapsed = true;

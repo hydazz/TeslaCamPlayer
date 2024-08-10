@@ -9,11 +9,14 @@ public class SettingsProvider : ISettingsProvider
 
     private readonly Lazy<Settings> _settings = new(SettingsValueFactory);
 
-    private static Settings SettingsValueFactory() =>
-        new ConfigurationBuilder()
+    private static Settings SettingsValueFactory()
+    {
+        var builder = new ConfigurationBuilder()
             .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
             .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.Development.json"), optional: true)
-            .AddEnvironmentVariables()
-            .Build()
-            .Get<Settings>();
+            .AddEnvironmentVariables();
+
+        var configuration = builder.Build();
+        return configuration.Get<Settings>();
+    }
 }
