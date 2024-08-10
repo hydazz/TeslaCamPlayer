@@ -1,9 +1,7 @@
 name: Release
 
 on:
-    push:
-        branches:
-            - release
+    workflow_dispatch:
 
 jobs:
     version:
@@ -23,12 +21,24 @@ jobs:
                   echo "VERSION=$(date +%Y.%-m.%-d.%-H%M)" >> $GITHUB_OUTPUT
                   echo "Version: $(date +%Y.%-m.%-d.%-H%M)"
 
+            - name: Fetch tags
+              run: git fetch --tags
+
+            - name: Generate changelog
+              id: changelog
+              run: |
+                  echo 'CHANGELOG=' >> $GITHUB_ENV
+                  LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+                  git log $LAST_TAG..HEAD --pretty=format:"- %s ([view](https://github.com/${{ github.repository }}/commit/%H))" >> $GITHUB_ENV
+                  echo "::set-output name=changelog::$(git log $LAST_TAG..HEAD --pretty=format:"- %s ([view](https://github.com/${{ github.repository }}/commit/%H))")"
+
             - name: Tag commit
               run: |
                   git tag v$VERSION ${{ github.sha }}
                   git push origin v$VERSION
 
     release:
+        needs: version
         runs-on: ubuntu-latest
         env:
             VERSION: ${{needs.version.outputs.VERSION}}
@@ -42,3 +52,4 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: "v${{env.VERSION}}"
+                  body: ${{ needs.version.outputs.changelog }}
