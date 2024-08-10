@@ -93,7 +93,10 @@ public partial class ClipViewer : ComponentBase
         _currentSegment = _clip.Segments.First();
         await SetCurrentSegmentVideosAsync();
 
-        mainVideoKey = CameraToVideoKey(_clip.Event.Camera);
+        if (clip?.Event?.Camera == null)
+        { mainVideoKey = "128D7AB3"; }
+        else
+        { mainVideoKey = CameraToVideoKey(_clip.Event.Camera); }
     }
 
     private void SwitchMainVideo(string newMainVideoKey)
@@ -131,9 +134,9 @@ public partial class ClipViewer : ComponentBase
             {
                 "128D7AB3" => "video small-video top-left-video",
                 "66EC38D4" => "video small-video top-right-video",
-                "87B15DCA" => "video small-video bottom-left-video",
-                "D1916B24" => "video small-video bottom-right-video",
-                _ => "video small-video"
+                "D1916B24" => "video small-video bottom-left-video",
+                "87B15DCA" => "video small-video bottom-right-video",
+                _ => ""
             };
         }
     }
@@ -146,9 +149,7 @@ public partial class ClipViewer : ComponentBase
     private string GetCurrentScrubTime()
     {
         if (_clip == null)
-        {
-            return ""; // for when no clip is selected
-        }
+        { return ""; }
 
         var currentTime = _clip.StartDate.AddSeconds(TimelineValue);
         return currentTime.ToString("hh:mm:ss tt");
