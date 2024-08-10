@@ -52,12 +52,20 @@ body {
     align-items: center;
     border-radius: 10px;
 
+    @media (prefers-color-scheme: light) {
+        --event-background: var(--mud-palette-background-grey);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        --event-background: var(--mud-palette-surface);
+    }
+
     &:hover {
-        background-color: var(--mud-palette-background-grey) !important;
+        background-color: var(--event-background) !important;
     }
 
     &--active {
-        background-color: var(--mud-palette-background-grey) !important;
+        background-color: var(--event-background) !important;
     }
 
     .thumbnail {
