@@ -46,7 +46,7 @@ public partial class ClipViewer : ComponentBase
     private double _timelineValue;
     private System.Timers.Timer _setVideoTimeDebounceTimer;
     private CancellationTokenSource _loadSegmentCts = new();
-    private string mainVideoKey = "128D7AB3"; // should be set to the camera who initiated the event
+    private string mainVideoKey;
 
     protected override void OnInitialized()
     {
@@ -92,12 +92,34 @@ public partial class ClipViewer : ComponentBase
 
         _currentSegment = _clip.Segments.First();
         await SetCurrentSegmentVideosAsync();
+
+        mainVideoKey = CameraToVideoKey(_clip.Event.Camera);
     }
 
     private void SwitchMainVideo(string newMainVideoKey)
     {
         mainVideoKey = newMainVideoKey;
     }
+
+    private string CameraToVideoKey(Cameras camera)
+    {
+        switch (camera)
+        {
+            case Cameras.Front:
+                return "128D7AB3";
+            case Cameras.RightRepeater:
+            case Cameras.RightBPillar:
+                return "87B15DCA";
+            case Cameras.Back:
+                return "66EC38D4";
+            case Cameras.LeftRepeater:
+            case Cameras.LeftBPillar:
+                return "D1916B24";
+            default:
+                return "128D7AB3";
+        }
+    }
+
 
     private string GetVideoClass(string videoKey)
     {
@@ -299,6 +321,22 @@ public partial class ClipViewer : ComponentBase
         {
             // ignore, happens sometimes
         }
+    }
+
+    private async void JumpToEventMarker()
+    {
+        if (_clip?.Event?.Timestamp == null)
+            return;
+
+        var eventTimeSeconds = (_clip.Event.Timestamp - _clip.StartDate).TotalSeconds - 5;
+        eventTimeSeconds = Math.Max(eventTimeSeconds, 0);
+
+        _isScrubbing = true;
+        TimelineValue = eventTimeSeconds;
+        await ScrubToSliderTime();
+        _isScrubbing = false;
+
+        await TogglePlayingAsync(true);
     }
 
     private double DateTimeToTimelinePercentage(DateTime dateTime)
