@@ -1,26 +1,26 @@
 ﻿@page "/"
 @using TeslaCamPlayer.BlazorHosted.Shared.Models
+@inject IDialogService DialogService
 
-@if (_filteredclips == null)
-{
-	<div class="loading-screen">
-		@if (_state.IsProcessing)
+<MudLayout>
+	<MudAppBar Elevation="1">
+		<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+		<MudSpacer/>
+		<MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/Rene-Sackers/TeslaCamPlayer" Target="_blank"/>
+	</MudAppBar>
+	<MudDrawer @bind-Open="@_isBrowserCollapsed" Elevation="1">
+		<MudDrawerHeader>
+			<MudText Typo="Typo.h6">TeslaCamPlayer</MudText>
+		</MudDrawerHeader>
+		@if (_filteredclips == null)
 		{
-			@($"{_state.Description ?? "Loading..."} {_state.Percentage}%")
+			<div class="loading-screen">
+				<MudProgressCircular Color="Color.Default" Value="@_state.Percentage"/>
+				<MudText Typo="Typo.body1">Indexing events, this can take a while depending on how many videos there are to index!</MudText>
+			</div>
 		}
 		else
 		{
-			<text>Loading...</text>
-		}
-	</div>
-}
-else
-{
-	<div class="main-content">
-		<div class="viewer-container">
-			<ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked" NextButtonClicked="NextButtonClicked" />
-		</div>
-		<div class="browser">
 			<MudDatePicker
 				@ref="_datePicker"
 				PickerVariant="PickerVariant.Static"
@@ -31,18 +31,19 @@ else
 				@onmousewheel="@DatePickerOnMouseWheel"/>
 
 			<MudToolBar Class="py-2">
-				<MudTooltip Text="Refresh videos/events">
+				<MudTooltip Text="Refresh Events">
 					<MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" OnClick="@(async () => await RefreshEventsAsync(true))"/>
 				</MudTooltip>
+				<MudTooltip Text="Delete Selected Event">
+					<MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@OpenDeleteConfirmationDialog"/>
+				</MudTooltip>
 				<MudSpacer/>
-				<div>
-					<MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter"/>
+				<MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="@ToggleFilter"/>
 
-					<MudPopover @bind-Open="_showFilter" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Class="pa-4">
-						<EventFilter Values="_eventFilter" ValuesChanged="EventFilterValuesChanged" />
-					</MudPopover>
-					<MudOverlay @bind-Visible="_showFilter" OnClick="ToggleFilter" />
-				</div>
+				<MudPopover @bind-Open="_showFilter" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Class="pa-4">
+					<EventFilter Values="_eventFilter" ValuesChanged="EventFilterValuesChanged"/>
+				</MudPopover>
+				<MudOverlay @bind-Visible="_showFilter" OnClick="ToggleFilter"/>
 			</MudToolBar>
 
 			<div @ref="_eventsList" class="events-list" @onscroll="EventListScrolled">
@@ -61,7 +62,10 @@ else
 									}
 								</div>
 								<div class="date">
-									@((context.Event?.Timestamp ?? context.StartDate).ToString("yyyy-MM-dd HH:mm:ss"))
+									@((context.Event?.Timestamp ?? context.StartDate).ToString("dd MMM yy h:mm tt"))
+								</div>
+								<div class="location">
+									@context.Event?.City
 								</div>
 							</div>
 						</div>
@@ -81,6 +85,19 @@ else
 					</Placeholder>
 				</Virtualize>
 			</div>
-		</div>
-	</div>
+		}
+	</MudDrawer>
+	<MudMainContent Class="viewer-container">
+		<ClipViewer @ref="_clipViewer" PreviousButtonClicked="PreviousButtonClicked"
+			NextButtonClicked="NextButtonClicked"/>
+	</MudMainContent>
+</MudLayout>
+
+@code {
+	private bool _isBrowserCollapsed = true;
+
+	private void ToggleDrawer()
+	{
+		_isBrowserCollapsed = !_isBrowserCollapsed;
+	}
 }

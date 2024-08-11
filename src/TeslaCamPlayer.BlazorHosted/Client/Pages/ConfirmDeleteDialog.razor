@@ -1,0 +1,19 @@
+@inherits ComponentBase
+<MudDialog>
+    <DialogContent>Are you sure you want to delete the selected event?
+        <p></p>
+        <b>This is NOT reversible!</b>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton OnClick="@Submit" Color="Color.Error">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -11,7 +11,7 @@ public partial class ClipsService : IClipsService
 {
 	private const string NoThumbnailImageUrl = "/img/no-thumbnail.png";
 	
-	private static readonly string CacheFilePath = Path.Combine(AppContext.BaseDirectory, "clips.json");
+	private readonly string CacheFilePath;
 	private static readonly Regex FileNameRegex = FileNameRegexGenerated();
 	private static readonly SemaphoreSlim RefreshSemaphore = new(1, 1);
 	private static Clip[] _clips;
@@ -25,9 +25,10 @@ public partial class ClipsService : IClipsService
 	{
 		_settingsProvider = settingsProvider;
 		_ffProbeService = ffProbeService;
+		CacheFilePath = _settingsProvider.Settings.CacheFilePath ?? Path.Combine(AppContext.BaseDirectory, "clips.json");
 	}
 
-	private static async Task<Clip[]> GetCachedAsync()
+	private async Task<Clip[]> GetCachedAsync()
 	{
 		try
 		{
@@ -125,7 +126,7 @@ public partial class ClipsService : IClipsService
 			.Concat(recentClips)
 			.OrderByDescending(c => c.StartDate)
 			.ToArray();
-		
+
 		await File.WriteAllTextAsync(CacheFilePath, JsonConvert.SerializeObject(_clips));
 	}
 
@@ -147,12 +148,12 @@ public partial class ClipsService : IClipsService
 				CameraRightRepeater = segmentVideos.FirstOrDefault(v => v.Camera == Cameras.RightRepeater),
 				CameraBack = segmentVideos.FirstOrDefault(v => v.Camera == Cameras.Back)
 			};
-			
+
 			currentClipSegments.Add(segment);
 
 			// Set i to the video after the last video in this clip segment, ie: the first video of the next segment.
 			i = i + segmentVideos.Count + 1;
-			
+
 			// No more recent video files
 			if (i >= recentVideoFiles.Count)
 			{
@@ -169,7 +170,7 @@ public partial class ClipsService : IClipsService
 			// Next video is within X seconds of last video of current segment, continue building clip segments
 			if (nextSegmentFirstVideo.StartDate <= segment.EndDate.AddSeconds(segmentVideoGapToleranceInSeconds))
 				continue;
-			
+
 			// Next video is more than X seconds, assume it's a new recent video clip
 			yield return new Clip(ClipType.Recent, currentClipSegments.ToArray())
 			{
@@ -248,7 +249,7 @@ public partial class ClipsService : IClipsService
 			.AsParallel()
 			.Where(v => v.EventFolderName == eventFolderName)
 			.ToList();
-		
+
 		var segments = eventVideoFiles
 			.GroupBy(v => v.StartDate)
 			.AsParallel()
@@ -274,6 +275,7 @@ public partial class ClipsService : IClipsService
 
 		return new Clip(eventVideoFiles.First().ClipType, segments)
 		{
+			DirectoryPath = eventFolderPath,
 			Event = eventInfo,
 			ThumbnailUrl = thumbnailUrl
 		};

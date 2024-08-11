@@ -1,8 +1,13 @@
 ﻿@import "components/*.scss";
-$border-color: #EEE;
+$border-color: #eee;
 $border-color-darken: darken($border-color, 20%);
 
-html, body {
+:root {
+	--mud-drawer-width-left: 310px !important;
+}
+
+html,
+body {
 	height: 100vh;
 	min-height: 500px;
 }
@@ -12,29 +17,25 @@ html, body {
 }
 
 .loading-screen {
-	height: 100%;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	font-size: 30px;
-	font-weight: bold;
+	height: 100vh;
+	text-align: center;
 }
 
-.main-content {
+.mud-main-content {
 	display: flex;
 	height: 100%;
-	
+	position: relative;
+
 	.viewer-container {
 		flex-grow: 1;
 		min-width: 0;
 		height: 100%;
 		overflow: hidden;
-	}
-	
-	.browser {
-		display: flex;
-		flex-flow: column;
-		flex-shrink: 0;
+		transition: margin-left 0.3s ease;
 	}
 }
 
@@ -42,42 +43,53 @@ html, body {
 	overflow-y: auto;
 }
 
-$event-item-height: 60px;
-$event-item-padding: 5px;
-$event-item-inner-height: $event-item-height - $event-item-padding * 2;
 .event {
 	display: flex;
-	height: $event-item-height;
-	padding: $event-item-padding;
+	padding: 5px;
+	margin: 5px;
 	transition: background-color 0.2s ease;
 	cursor: pointer;
 	align-items: center;
+	border-radius: 10px;
+
+	@media (prefers-color-scheme: light) {
+		--event-background: var(--mud-palette-background-grey);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		--event-background: var(--mud-palette-surface);
+	}
 
 	&:hover {
-		background-color: var(--mud-palette-background-grey) !important;
+		background-color: var(--event-background) !important;
 	}
 
 	&--active {
-		background-color: var(--mud-palette-background-grey) !important;
+		background-color: var(--event-background) !important;
 	}
 
 	.thumbnail {
-		// Pictures are 4:3
-		width: #{calc(round(calc($event-item-inner-height / 3 * 4 * 100)) / 100)}px;
 		height: 100%;
 		transform: none;
+		border-radius: 5px;
 	}
-	
+
 	.details {
 		flex-grow: 1;
+	}
+
+	.icons,
+	.date,
+	.location {
+		display: flex
 	}
 }
 
 .browser-date-picker {
 	flex-shrink: 0;
-	
+
 	.mud-picker-datepicker-toolbar {
-		display: none;	
+		display: none;
 	}
 }
 

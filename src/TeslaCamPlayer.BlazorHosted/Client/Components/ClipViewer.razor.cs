@@ -13,13 +13,13 @@ namespace TeslaCamPlayer.BlazorHosted.Client.Components;
 public partial class ClipViewer : ComponentBase
 {
 	private static readonly TimeSpan TimelineScrubTimeout = TimeSpan.FromSeconds(2);
-	
+
 	[Inject]
 	public IJSRuntime JsRuntime { get; set; }
-	
+
 	[Parameter]
 	public EventCallback PreviousButtonClicked { get; set; }
-	
+
 	[Parameter]
 	public EventCallback NextButtonClicked { get; set; }
 
@@ -50,6 +50,7 @@ public partial class ClipViewer : ComponentBase
 	private double _timelineValue;
 	private System.Timers.Timer _setVideoTimeDebounceTimer;
 	private CancellationTokenSource _loadSegmentCts = new();
+	private string mainVideoKey;
 
 	protected override void OnInitialized()
 	{
@@ -95,6 +96,67 @@ public partial class ClipViewer : ComponentBase
 
 		_currentSegment = _clip.Segments.First();
 		await SetCurrentSegmentVideosAsync();
+
+		if (clip?.Event?.Camera == null)
+		{ mainVideoKey = "128D7AB3"; }
+		else
+		{ mainVideoKey = CameraToVideoKey(_clip.Event.Camera); }
+	}
+
+	private void SwitchMainVideo(string newMainVideoKey)
+	{
+		mainVideoKey = newMainVideoKey;
+	}
+
+	private string CameraToVideoKey(Cameras camera)
+	{
+		switch (camera)
+		{
+			case Cameras.Front:
+				return "128D7AB3";
+			case Cameras.RightRepeater:
+			case Cameras.RightBPillar:
+				return "87B15DCA";
+			case Cameras.Back:
+				return "66EC38D4";
+			case Cameras.LeftRepeater:
+			case Cameras.LeftBPillar:
+				return "D1916B24";
+			default:
+				return "128D7AB3";
+		}
+	}
+
+
+	private string GetVideoClass(string videoKey)
+	{
+		if (videoKey == mainVideoKey)
+			return "video main-video";
+		else
+		{
+			return videoKey switch
+			{
+				"128D7AB3" => "video small-video top-left-video",
+				"66EC38D4" => "video small-video top-right-video",
+				"D1916B24" => "video small-video bottom-left-video",
+				"87B15DCA" => "video small-video bottom-right-video",
+				_ => ""
+			};
+		}
+	}
+
+	private string GetPlayerClass(string videoKey)
+	{
+		return videoKey == mainVideoKey ? "video main-video" : "video small-video-style";
+	}
+
+	private string GetCurrentScrubTime()
+	{
+		if (_clip == null)
+		{ return ""; }
+
+		var currentTime = _clip.StartDate.AddSeconds(TimelineValue);
+		return currentTime.ToString("hh:mm:ss tt");
 	}
 
 	private async Task<bool> SetCurrentSegmentVideosAsync()
@@ -104,14 +166,14 @@ public partial class ClipViewer : ComponentBase
 
 		await _loadSegmentCts.CancelAsync();
 		_loadSegmentCts = new();
-		
+
 		_videoLoadedEventCount = 0;
 		var cameraCount = _currentSegment.CameraAnglesCount();
 
 		var wasPlaying = _isPlaying;
 		if (wasPlaying)
 			await TogglePlayingAsync(false);
-		
+
 		_videoPlayerFront.Src = _currentSegment.CameraFront?.Url;
 		_videoPlayerLeftRepeater.Src = _currentSegment.CameraLeftRepeater?.Url;
 		_videoPlayerRightRepeater.Src = _currentSegment.CameraRightRepeater?.Url;
@@ -119,7 +181,7 @@ public partial class ClipViewer : ComponentBase
 
 		if (_loadSegmentCts.IsCancellationRequested)
 			return false;
-		
+
 		await InvokeAsync(StateHasChanged);
 
 		var timeout = Task.Delay(10000);
@@ -127,7 +189,7 @@ public partial class ClipViewer : ComponentBase
 		{
 			while (_videoLoadedEventCount < cameraCount && !_loadSegmentCts.IsCancellationRequested)
 				await Task.Delay(10, _loadSegmentCts.Token);
-			
+
 			Console.WriteLine("Loading done");
 		}, _loadSegmentCts.Token), timeout);
 
@@ -201,11 +263,11 @@ public partial class ClipViewer : ComponentBase
 
 		if (_isScrubbing)
 			return;
-		
+
 		var seconds = await _videoPlayerFront.GetTimeAsync();
 		var currentTime = _currentSegment.StartDate.AddSeconds(seconds);
 		var secondsSinceClipStart = (currentTime - _clip.StartDate).TotalSeconds;
-		
+
 		_ignoreTimelineValue = secondsSinceClipStart;
 		TimelineValue = secondsSinceClipStart;
 	}
@@ -215,7 +277,7 @@ public partial class ClipViewer : ComponentBase
 		_isScrubbing = true;
 		_wasPlayingBeforeScrub = _isPlaying;
 		await TogglePlayingAsync(false);
-		
+
 		// Allow value change event to trigger, then scrub before user releases mouse click
 		await AwaitUiUpdate();
 		await ScrubToSliderTime();
@@ -226,7 +288,7 @@ public partial class ClipViewer : ComponentBase
 		Console.WriteLine("Pointer up");
 		await ScrubToSliderTime();
 		_isScrubbing = false;
-			
+
 		if (!_isPlaying && _wasPlayingBeforeScrub)
 			await TogglePlayingAsync(true);
 	}
@@ -237,7 +299,7 @@ public partial class ClipViewer : ComponentBase
 	private async Task ScrubToSliderTime()
 	{
 		_setVideoTimeDebounceTimer.Enabled = false;
-		
+
 		if (!_isScrubbing)
 			return;
 
@@ -264,6 +326,22 @@ public partial class ClipViewer : ComponentBase
 		{
 			// ignore, happens sometimes
 		}
+	}
+
+	private async void JumpToEventMarker()
+	{
+		if (_clip?.Event?.Timestamp == null)
+			return;
+
+		var eventTimeSeconds = (_clip.Event.Timestamp - _clip.StartDate).TotalSeconds - 5;
+		eventTimeSeconds = Math.Max(eventTimeSeconds, 0);
+
+		_isScrubbing = true;
+		TimelineValue = eventTimeSeconds;
+		await ScrubToSliderTime();
+		_isScrubbing = false;
+
+		await TogglePlayingAsync(true);
 	}
 
 	private double DateTimeToTimelinePercentage(DateTime dateTime)

@@ -97,6 +97,30 @@ public partial class Index : ComponentBase
 		}
 	}
 
+	private async Task OpenDeleteConfirmationDialog()
+	{
+		var options = new DialogOptions { CloseOnEscapeKey = true };
+		var dialog = DialogService.Show<ConfirmDeleteDialog>("Confirm Delete", options);
+		var result = await dialog.Result;
+
+		if (!result.Canceled)
+		{
+			await DeleteEventAsync();
+		}
+	}
+
+	private async Task DeleteEventAsync()
+	{
+	    if (_activeClip != null && !string.IsNullOrEmpty(_activeClip.DirectoryPath))
+	    {
+	        var response = await HttpClient.PostAsync($"Api/DeleteEvent?path={Uri.EscapeDataString(_activeClip.DirectoryPath)}", null);
+	        if (response.IsSuccessStatusCode)
+	        {
+	            await RefreshEventsAsync(true);
+	        }
+	    }
+	}
+
 	private void FilterClips()
 	{
 		_filteredclips = (_clips ??= Array.Empty<Clip>())
