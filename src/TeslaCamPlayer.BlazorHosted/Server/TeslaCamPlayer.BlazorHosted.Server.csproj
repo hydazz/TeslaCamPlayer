@@ -4,6 +4,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>warnings</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <RuntimeIdentifiers>win-x64;win-x86;linux-x64;linux-musl-x64;linux-arm;linux-musl-arm;linux-arm64;linux-musl-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

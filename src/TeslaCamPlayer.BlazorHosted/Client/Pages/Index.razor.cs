@@ -7,6 +7,7 @@ using TeslaCamPlayer.BlazorHosted.Client.Components;
 using TeslaCamPlayer.BlazorHosted.Client.Helpers;
 using TeslaCamPlayer.BlazorHosted.Client.Models;
 using TeslaCamPlayer.BlazorHosted.Shared.Models;
+using System.Reflection;
 
 namespace TeslaCamPlayer.BlazorHosted.Client.Pages;
 
@@ -268,5 +269,12 @@ public partial class Index : ComponentBase
 
         _ignoreDatePicked = targetDate;
         await _datePicker.GoToDate(targetDate);
+    }
+    public string AssemblyVersion
+    {
+        get
+        {
+            return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        }
     }
 }
